@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChaosTech NSD v14 - Simulator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; font-family: 'Courier New', monospace; overflow: hidden; background: #0a0e27; }
+        
+        body { background: #0a0e27; color: #00ff00; }
+        
+        #container { display: flex; width: 100%; height: 100%; }
+        #radar { flex: 2; background: #0a0e27; border-right: 2px solid #00ff00; position: relative; }
+        #panels { flex: 1; background: #0a0e27; border-left: 2px solid #00ff00; overflow-y: auto; display: flex; flex-direction: column; }
+        
+        canvas { display: block; }
+        
+        .panel { border: 2px solid #00ff00; margin: 8px; padding: 12px; background: #0a0e27; color: #00ff00; font-size: 11px; }
+        .panel-title { font-weight: bold; color: #ffff00; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .metric { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #003300; }
+        .metric-label { color: #00ff00; }
+        .metric-value { color: #ffff00; font-weight: bold; }
+        
+        .threat-high { color: #ff0000; }
+        .threat-med { color: #ffaa00; }
+        .threat-low { color: #00ff00; }
+        
+        button { background: #0a0e27; color: #00ff00; border: 1px solid #00ff00; padding: 6px 12px; margin: 4px; cursor: pointer; font-size: 10px; font-weight: bold; transition: all 0.2s; }
+        button:hover { background: #00ff00; color: #0a0e27; }
+        button.active { background: #00ff00; color: #0a0e27; }
+        
+        .timeline-container { padding: 10px; border: 2px solid #00ff00; margin: 8px; }
+        .timeline-bar { width: 100%; height: 20px; background: #1a1e37; border: 1px solid #00ff00; position: relative; cursor: pointer; }
+        .timeline-progress { height: 100%; background: #00ff00; width: 0%; }
+        .timeline-controls { display: flex; gap: 4px; margin-top: 6px; justify-content: center; }
+        
+        .export-btn { background: #ff0000; color: #fff; border: 1px solid #ff0000; padding: 8px 16px; font-weight: bold; }
+        .export-btn:hover { background: #cc0000; }
+        
+        .fingerprint-box { background: #1a1e37; border: 2px solid #ffff00; padding: 8px; margin: 4px 0; }
+        .fingerprint-id { color: #ffff00; font-weight: bold; }
+        .fingerprint-sig { color: #00ff00; font-size: 9px; }
+        
+        .heatmap-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; margin-top: 6px; }
+        .heatmap-cell { width: 100%; aspect-ratio: 1; border: 1px solid #00ff00; }
+        
+        select { background: #0a0e27; color: #00ff00; border: 1px solid #00ff00; padding: 4px; margin: 4px 0; }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="radar"></div>
+        <div id="panels">
+            <!-- THREAT MATRIX & FINGERPRINT -->
+            <div class="panel" style="flex: 0.8;">
+                <div class="panel-title">🎯 THREAT MATRIX & FINGERPRINT</div>
+                <div id="fingerprint" class="fingerprint-box">
+                    <div class="fingerprint-id" id="swarmId">SWARM-2026-001-DIAMOND</div>
+                    <div class="fingerprint-sig" id="rfSig">RF: 2.4G + 5.8G</div>
+                    <div class="metric">
+                        <span class="metric-label">Formation:</span>
+                        <span class="metric-value" id="formation">DIAMOND</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Threat Level:</span>
+                        <span class="metric-value threat-high" id="threatLevel">CRITICAL</span>
+                    </div>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Detected:</span>
+                    <span class="metric-value" id="detected">7</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Threats:</span>
+                    <span class="metric-value threat-high" id="threats">3</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Jammed:</span>
+                    <span class="metric-value threat-low" id="jammed">0</span>
+                </div>
+            </div>
+            
+                        <!-- SPAWN & CONTROLS -->
+            <div class="panel" style="flex: 0.6;">
+                <div class="panel-title">📍 SPAWN</div>
+                <button onclick="addDrone('Hostile')">+ Hostile</button>
+                <button onclick="addDrone('Ally')">+ Ally</button>
+                <button onclick="spawnSwarm()">🐝 SWARM x5</button>
+                <button onclick="resetSimulation()">RESET</button>
+                <div style="margin-top: 6px;">
+                    <select id="weather" onchange="updateEnvironment()">
+                        <option value="clear">Clear</option>
+                        <option value="rain">Rain (-22%)</option>
+                        <option value="storm">Heavy Storm (-28%)</option>
+                        <option value="snow">Snow (-18%)</option>
+                    </select>
+                    <select id="terrain" onchange="updateEnvironment()">
+                        <option value="open">Open Terrain</option>
+                        <option value="urban">Urban (-8%)</option>
+                        <option value="mountain">Mountain (-10%)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- FORMATION -->
+            <div class="panel" style="flex: 0.5;">
+                <div class="panel-title">🔷 FORMATION</div>
+                <button onclick="setFormation('SCATTER')">SCATTER</button>
+                <button onclick="setFormation('LINE')">LINE</button>
+                <button onclick="setFormation('WEDGE')">WEDGE</button>
+                <button onclick="setFormation('DIAMOND')">DIAMOND</button>
+            </div>
+            
+            <!-- PRIORITY -->
+            <div class="panel" style="flex: 0.6;">
+                <div class="panel-title">⚠️ PRIORITY</div>
+                <div id="priorityBars"></div>
+            </div>
+            
+            <!-- EFFECTIVENESS -->
+            <div class="panel" style="flex: 0.4;">
+                <div class="panel-title">✅ EFFECTIVENESS</div>
+                <div class="metric">
+                    <span class="metric-label">Success:</span>
+                    <span class="metric-value" id="effectiveness">0%</span>
+                </div>
+            </div>
+            
+            <!-- HEATMAP -->
+            <div class="panel" style="flex: 0.7;">
+                <div class="panel-title">🔥 HEATMAP</div>
+                <div class="heatmap-grid" id="heatmap"></div>
+            </div>
+            
+            <!-- RF SIGNATURES -->
+            <div class="panel" style="flex: 0.7;">
+                <div class="panel-title">📡 RF SIGNATURES</div>
+                <div id="rfSignatures" style="font-size: 9px;"></div>
+            </div>
+            
+            <!-- DISRUPTION -->
+            <div class="panel" style="flex: 0.7;">
+                <div class="panel-title">🚨 DISRUPTION TARGETS</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                    <button id="policeBtn" onclick="toggleDisruption('police')" style="font-size: 9px; padding: 4px;">🚓 Police</button>
+                    <button id="fireBtn" onclick="toggleDisruption('fire')" style="font-size: 9px; padding: 4px;">🚒 Fire/EMS</button>
+                    <button id="militaryBtn" onclick="toggleDisruption('military')" style="font-size: 9px; padding: 4px;">⚔️ Military</button>
+                    <button id="cellBtn" onclick="toggleDisruption('cell')" style="font-size: 9px; padding: 4px;">📱 Cellular</button>
+                    <button id="lteBtn" onclick="toggleDisruption('lte')" style="font-size: 9px; padding: 4px;">📡 LTE/WiFi</button>
+                    <button id="triangBtn" onclick="toggleDisruption('triangulation')" style="font-size: 9px; padding: 4px;">📍 Triangulation</button>
+                </div>
+            </div>
+            
+            <!-- ACTIONS -->
+            <div class="panel" style="flex: 0.5;">
+                <div class="panel-title">🎮 ACTIONS</div>
+                <button onclick="globalJam()">GLOBAL JAM</button>
+                <button onclick="selectiveJam()">SELECTIVE JAM</button>
+                <button class="export-btn" onclick="exportAAB()">EXPORT AAB</button>
+            </div>
+
+            <!-- PREDICT AI -->
+            <div class="panel" style="flex: 0.5;">
+                <div class="panel-title">🤖 PREDICT AI</div>
+                <div class="metric">
+                    <span class="metric-label">Confidence:</span>
+                    <span class="metric-value" id="aiConfidence">0%</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Next Move:</span>
+                    <span class="metric-value" id="aiPrediction">Analyzing...</span>
+                </div>
+            </div>
+
+            <!-- PRECISION -->
+            <div class="panel" style="flex: 0.5;">
+                <div class="panel-title">🎯 PRECISION</div>
+                <div class="metric">
+                    <span class="metric-label">Targeting Accuracy:</span>
+                    <span class="metric-value" id="precision">0%</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Collision Avoidance:</span>
+                    <span class="metric-value" id="collision">ACTIVE</span>
+                </div>
+            </div>
+
+                        <!-- TRIANGULATION -->
+            <div class="panel" style="flex: 0.8;">
+                <div class="panel-title">📍 TRIANGULATION & ORIGIN</div>
+                <div id="triangulationData" style="font-size: 9px; line-height: 1.8;">
+                    <div class="metric" style="border: none;">
+                        <span>Signal Strength:</span>
+                        <span class="metric-value" id="signalStrength">-85dBm</span>
+                    </div>
+                    <div class="metric" style="border: none;">
+                        <span>Accuracy Radius:</span>
+                        <span class="metric-value" id="accuracy">±15m</span>
+                    </div>
+                    <div class="metric" style="border: none;">
+                        <span>Latitude:</span>
+                        <span class="metric-value" id="latitude" style="font-size: 10px;">38.8951°N</span>
+                    </div>
+                    <div class="metric" style="border: none;">
+                        <span>Longitude:</span>
+                        <span class="metric-value" id="longitude" style="font-size: 10px;">-77.0369°W</span>
+                    </div>
+                    <div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid #003300; font-size: 8px; color: #ffff00;">
+                        🎯 Origin: Washington, DC
+                    </div>
+                </div>
+            </div>
+
+                        <!-- INFRASTRUCTURE VULNERABILITY SCANNER -->
+            <div class="timeline-container">
+                <div class="panel-title">🏢 INFRASTRUCTURE SCANNER</div>
+                <div style="font-size: 10px; color: #ffff00; margin-bottom: 8px;">Real-time Network Penetration Analysis</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px;">
+                    <button onclick="scanInfrastructure('airport')" style="font-size: 9px; padding: 6px; background: #1a1e37; border: 1px solid #ff0000;">🛫 Airport</button>
+                    <button onclick="scanInfrastructure('powerplant')" style="font-size: 9px; padding: 6px; background: #1a1e37; border: 1px solid #ff0000;">⚡ Power Plant</button>
+                    <button onclick="scanInfrastructure('hospital')" style="font-size: 9px; padding: 6px; background: #1a1e37; border: 1px solid #ff0000;">🏥 Hospital</button>
+                    <button onclick="scanInfrastructure('datacenter')" style="font-size: 9px; padding: 6px; background: #1a1e37; border: 1px solid #ff0000;">🖥️ Data Center</button>
+                </div>
+                <div id="scanResults" style="font-size: 9px; line-height: 1.6; background: #0a0e27; border: 1px solid #ff0000; padding: 8px; max-height: 120px; overflow-y: auto; color: #ff0000;">
+                    <div style="color: #00ff00;">Ready to scan...</div>
+                </div>
+            </div>
+
+   <script>
+        // ==================== STATE ====================
+        const state = {
+            drones: [],
+            jammed: new Set(),
+            jamActive: false,
+            selectiveActive: false,
+            formation: 'DIAMOND',
+            weather: 'clear',
+            terrain: 'open',
+            effectivenessBase: 100,
+            replayActive: false,
+            replayTime: 0,
+            missionStart: Date.now(),
+            missionLog: [],
+            droneCounter: 0
+        };
+
+        const weatherMods = { clear: 0, rain: -22, storm: -28, snow: -18 };
+        const terrainMods = { open: 0, urban: -8, mountain: -10 };
+
+        // ==================== CANVAS SETUP ====================
+        const radarDiv = document.getElementById('radar');
+        const canvas = document.createElement('canvas');
+        canvas.width = radarDiv.clientWidth;
+        canvas.height = radarDiv.clientHeight;
+        radarDiv.appendChild(canvas);
+        const ctx = canvas.getContext('2d');
+
+        // ==================== DRONE CLASS ====================
+        class Drone {
+            constructor(type) {
+                this.id = `DRONE-${++state.droneCounter}`;
+                this.type = type;
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.threat = type === 'Hostile' ? Math.random() * 100 : 0;
+                this.jammed = false;
+                this.rfBand = ['2.4G', '5.8G', '10.5G'][Math.floor(Math.random() * 3)];
+                this.hardened = Math.random() > 0.8;
+                this.detectedTime = Date.now();
+                this.createdTime = Date.now();
+            }
+
+            update() {
+                // Jammed drones don't move
+                if (this.jammed) return;
+                
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+            }
+
+            draw() {
+                const color = this.jammed ? '#ffff00' : (this.type === 'Hostile' ? '#ff0000' : '#00ff00');
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+                if (this.hardened) {
+                    ctx.strokeStyle = '#ff00ff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            }
+        }
+
+        // ==================== MAIN LOOP ====================
+        function animate() {
+            // Clear canvas
+            ctx.fillStyle = '#0a0e27';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Grid
+            ctx.strokeStyle = '#003300';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < canvas.width; i += 50) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+            for (let i = 0; i < canvas.height; i += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
+            }
+
+            // Update drones
+            state.drones.forEach(drone => {
+                drone.update();
+                drone.draw();
+            });
+
+            // Draw center crosshair
+            ctx.strokeStyle = '#00ff00';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2 - 20, canvas.height / 2);
+            ctx.lineTo(canvas.width / 2 + 20, canvas.height / 2);
+            ctx.moveTo(canvas.width / 2, canvas.height / 2 - 20);
+            ctx.lineTo(canvas.width / 2, canvas.height / 2 + 20);
+            ctx.stroke();
+
+            updateUI();
+            if (state.replayActive) advanceReplay();
+            requestAnimationFrame(animate);
+        }
+
+        // ==================== UI UPDATES ====================
+        function updateUI() {
+            const hostile = state.drones.filter(d => d.type === 'Hostile').length;
+            const jammedCount = state.drones.filter(d => d.jammed).length;
+
+            document.getElementById('detected').textContent = state.drones.length;
+            document.getElementById('threats').textContent = hostile;
+            document.getElementById('jammed').textContent = jammedCount;
+            document.getElementById('swarmId').textContent = `SWARM-2026-${String(state.droneCounter).padStart(3, '0')}-${state.formation}`;
+            document.getElementById('formation').textContent = state.formation;
+            document.getElementById('rfSig').textContent = `RF: 2.4G + 5.8G + 10.5G (${state.drones.filter(d => d.hardened).length} hardened)`;
+
+            const effectiveness = calculateEffectiveness();
+            document.getElementById('effectiveness').textContent = effectiveness + '%';
+
+            updatePriority();
+            updateHeatmap();
+            updateRF();
+            updateAIPrediction();
+            updatePrecision();
+            updateTriangulation();
+        }
+
+        function calculateEffectiveness() {
+            const weather = weatherMods[state.weather] || 0;
+            const terrain = terrainMods[state.terrain] || 0;
+            let base = 100;
+            if (state.jamActive) base -= 20;
+            base += weather + terrain;
+            return Math.max(0, base);
+        }
+
+        function updatePriority() {
+            const container = document.getElementById('priorityBars');
+            container.innerHTML = '';
+            state.drones.slice(0, 4).forEach(drone => {
+                const threat = Math.floor(drone.threat);
+                const color = threat > 70 ? '#ff0000' : threat > 40 ? '#ffaa00' : '#00ff00';
+                const bar = document.createElement('div');
+                bar.style.cssText = `margin: 2px 0; background: linear-gradient(90deg, ${color} ${threat}%, #1a1e37 ${threat}%); height: 12px; border: 1px solid ${color};`;
+                container.appendChild(bar);
+            });
+        }
+
+        let heatmapData = [];
+        
+        function initHeatmap() {
+            heatmapData = [];
+            for (let i = 0; i < 25; i++) {
+                heatmapData.push(Math.floor(Math.random() * 100));
+            }
+            renderHeatmap();
+        }
+
+        function updateHeatmap() {
+            if (Math.random() > 0.95) {
+                for (let i = 0; i < heatmapData.length; i++) {
+                    heatmapData[i] = Math.max(0, Math.min(100, heatmapData[i] - 2 + Math.random() * 4));
+                }
+                renderHeatmap();
+            }
+        }
+
+        function renderHeatmap() {
+            const container = document.getElementById('heatmap');
+            container.innerHTML = '';
+            heatmapData.forEach(heat => {
+                const cell = document.createElement('div');
+                cell.className = 'heatmap-cell';
+                const color = heat > 70 ? '#ff0000' : heat > 40 ? '#ffaa00' : '#003300';
+                cell.style.backgroundColor = color;
+                cell.style.borderColor = color;
+                container.appendChild(cell);
+            });
+        }
+
+        function updateRF() {
+            const container = document.getElementById('rfSignatures');
+            const bands = {};
+            state.drones.forEach(d => {
+                bands[d.rfBand] = (bands[d.rfBand] || 0) + 1;
+            });
+            container.innerHTML = Object.entries(bands).map(([band, count]) => 
+                `<div>🔹 ${band}: ${count} drones</div>`
+            ).join('');
+        }
+
+        // ==================== CONTROLS ====================
+        function addDrone(type) {
+            const drone = new Drone(type);
+            state.drones.push(drone);
+            state.missionLog.push({ time: Date.now() - state.missionStart, event: `${type} drone spawned`, droneId: drone.id });
+        }
+
+        function setFormation(form) {
+            state.formation = form;
+            state.drones.forEach(d => {
+                d.vx = (Math.random() - 0.5) * 2;
+                d.vy = (Math.random() - 0.5) * 2;
+            });
+        }
+
+        function updateEnvironment() {
+            state.weather = document.getElementById('weather').value;
+            state.terrain = document.getElementById('terrain').value;
+            state.missionLog.push({ time: Date.now() - state.missionStart, event: `Environment: ${state.weather} + ${state.terrain}` });
+        }
+
+        function globalJam() {
+            state.jamActive = true;
+            // Only jam HOSTILE drones, never jam allies
+            state.drones.forEach(d => {
+                if (d.type === 'Hostile' && (!d.hardened || Math.random() > 0.25)) {
+                    d.jammed = true;
+                }
+            });
+            const jammedCount = state.drones.filter(d => d.jammed && d.type === 'Hostile').length;
+            state.missionLog.push({ time: Date.now() - state.missionStart, event: 'Global JAM activated', jammed: jammedCount });
+        }
+
+        function selectiveJam() {
+            state.selectiveActive = true;
+            // Only target hostile drones
+            const hostile = state.drones.filter(d => d.type === 'Hostile' && !d.jammed);
+            hostile.slice(0, 2).forEach(d => d.jammed = true);
+            state.missionLog.push({ time: Date.now() - state.missionStart, event: 'Selective JAM deployed', targetCount: Math.min(2, hostile.length) });
+        }
+
+        function resetSimulation() {
+            state.drones = [];
+            state.jammed.clear();
+            state.jamActive = false;
+            state.selectiveActive = false;
+            state.missionStart = Date.now();
+            state.missionLog = [];
+            state.replayTime = 0;
+            state.replayActive = false;
+            updateUI();
+        }
+
+        function spawnSwarm() {
+            for (let i = 0; i < 5; i++) {
+                const drone = new Drone('Hostile');
+                state.drones.push(drone);
+                state.missionLog.push({ time: Date.now() - state.missionStart, event: `Swarm drone ${i+1} spawned`, droneId: drone.id });
+            }
+        }
+
+        // ==================== DISRUPTION STATE ====================
+        const disruption = {
+            police: false,
+            fire: false,
+            military: false,
+            cell: false,
+            lte: false,
+            triangulation: false
+        };
+
+        function toggleDisruption(target) {
+            disruption[target] = !disruption[target];
+            const btn = document.getElementById(target + 'Btn');
+            btn.classList.toggle('active');
+            
+            const targets = Object.entries(disruption).filter(([k, v]) => v).map(([k]) => k);
+            if (targets.length > 0) {
+                state.missionLog.push({ 
+                    time: Date.now() - state.missionStart, 
+                    event: `Disruption: ${targets.join(', ')}` 
+                });
+            }
+        }
+
+        // ==================== AI PREDICTION ====================
+        let aiCache = { confidence: '0%', prediction: 'No drones detected', lastUpdate: 0 };
+        
+        function updateAIPrediction() {
+            const now = Date.now();
+            if (now - aiCache.lastUpdate < 2000) {
+                document.getElementById('aiConfidence').textContent = aiCache.confidence;
+                document.getElementById('aiPrediction').textContent = aiCache.prediction;
+                return;
+            }
+
+            if (state.drones.length === 0) {
+                aiCache.confidence = '0%';
+                aiCache.prediction = 'No drones detected';
+            } else {
+                aiCache.confidence = Math.floor(Math.random() * 40 + 60) + '%';
+                const predictions = ['Formation Change', 'Speed Increase', 'Direction Shift', 'Scattered', 'Holding Position'];
+                aiCache.prediction = predictions[Math.floor(Math.random() * predictions.length)];
+            }
+            
+            aiCache.lastUpdate = now;
+            document.getElementById('aiConfidence').textContent = aiCache.confidence;
+            document.getElementById('aiPrediction').textContent = aiCache.prediction;
+        }
+
+        // ==================== PRECISION ====================
+        function updatePrecision() {
+            const jammedCount = state.drones.filter(d => d.jammed).length;
+            const totalCount = state.drones.length;
+            const accuracy = totalCount > 0 ? Math.floor((jammedCount / totalCount) * 100) : 0;
+            
+            document.getElementById('precision').textContent = accuracy + '%';
+        }
+
+        // ==================== TRIANGULATION ====================
+        let triangCache = { signal: '-85dBm', accuracy: '±15m', lat: '38.8951', lon: '-77.0369', lastUpdate: 0 };
+        
+        function updateTriangulation() {
+            const now = Date.now();
+            if (now - triangCache.lastUpdate < 3000) {
+                document.getElementById('signalStrength').textContent = triangCache.signal;
+                document.getElementById('accuracy').textContent = triangCache.accuracy;
+                document.getElementById('latitude').textContent = triangCache.lat;
+                document.getElementById('longitude').textContent = triangCache.lon;
+                return;
+            }
+
+            const signalStrengths = ['-75dBm', '-80dBm', '-85dBm', '-90dBm', '-95dBm'];
+            const accuracies = ['±5m', '±8m', '±12m', '±15m', '±20m'];
+            const idx = Math.floor(Math.random() * signalStrengths.length);
+            
+            triangCache.signal = signalStrengths[idx];
+            triangCache.accuracy = accuracies[idx];
+            triangCache.lat = (38.8951 + (Math.random() - 0.5) * 0.01).toFixed(4);
+            triangCache.lon = (-77.0369 + (Math.random() - 0.5) * 0.01).toFixed(4);
+            triangCache.lastUpdate = now;
+            
+            document.getElementById('signalStrength').textContent = triangCache.signal;
+            document.getElementById('accuracy').textContent = triangCache.accuracy;
+            document.getElementById('latitude').textContent = triangCache.lat;
+            document.getElementById('longitude').textContent = triangCache.lon;
+        }
+
+        // ==================== REPLAY ====================
+        function rewind() {
+            state.replayTime = 0;
+            state.replayActive = false;
+            updateTimelineUI();
+        }
+
+        function toggleReplay() {
+            state.replayActive = !state.replayActive;
+        }
+
+        function stepBack() {
+            state.replayTime = Math.max(0, state.replayTime - 1000);
+            updateTimelineUI();
+        }
+
+        function stepForward() {
+            state.replayTime = Math.min(872000, state.replayTime + 1000);
+            updateTimelineUI();
+        }
+
+        function advanceReplay() {
+            state.replayTime += 500;
+            if (state.replayTime > 872000) {
+                state.replayActive = false;
+                state.replayTime = 872000;
+            }
+            updateTimelineUI();
+        }
+
+        function seekTimeline(e) {
+            const rect = e.target.getBoundingClientRect();
+            const pct = (e.clientX - rect.left) / rect.width;
+            state.replayTime = pct * 872000;
+            updateTimelineUI();
+        }
+
+        function updateTimelineUI() {
+            const pct = (state.replayTime / 872000) * 100;
+            document.getElementById('timelineProgress').style.width = pct + '%';
+            
+            const mins = Math.floor(state.replayTime / 60000);
+            const secs = Math.floor((state.replayTime % 60000) / 1000);
+            document.getElementById('timeDisplay').textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        // ==================== AAB EXPORT ====================
+        function exportAAB() {
+            const jammedCount = state.drones.filter(d => d.jammed).length;
+            const effectiveness = calculateEffectiveness();
+            const roi = jammedCount > 0 ? Math.floor(250000000 / (jammedCount * 200)) : 0;
+
+            const html = `<!DOCTYPE html>
+<html>
+<head>
+    <title>After-Action Brief - ChaosTech NSD</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 20px; }
+        .aab { background: white; padding: 30px; border: 2px solid #000; max-width: 900px; margin: 0 auto; }
+        .header { text-align: center; border-bottom: 3px solid #000; padding-bottom: 15px; margin-bottom: 20px; }
+        h1 { margin: 0; font-size: 28px; }
+        .subtitle { color: #666; font-size: 12px; }
+        .section { margin: 20px 0; border-left: 4px solid #0000cc; padding-left: 15px; }
+        .section h2 { margin: 0 0 10px 0; font-size: 14px; color: #0000cc; text-transform: uppercase; }
+        .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .metric-box { background: #f9f9f9; padding: 12px; border: 1px solid #ddd; }
+        .metric-label { font-size: 12px; color: #666; text-transform: uppercase; }
+        .metric-value { font-size: 24px; font-weight: bold; color: #000; margin-top: 5px; }
+        .threat-critical { color: #cc0000; }
+        .effectiveness-bar { background: #ddd; height: 30px; width: 100%; margin: 10px 0; position: relative; }
+        .effectiveness-fill { background: #00aa00; height: 100%; width: ${effectiveness}%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
+        th { background: #f0f0f0; font-weight: bold; }
+        .footer { text-align: center; margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd; font-size: 10px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="aab">
+        <div class="header">
+            <h1>AFTER-ACTION BRIEF</h1>
+            <div class="subtitle">ChaosTech Defense LLC | Neuro Swarm Disruptor v14</div>
+        </div>
+        <div class="section">
+            <h2>📋 Mission Summary</h2>
+            <div class="metric-grid">
+                <div class="metric-box">
+                    <div class="metric-label">Scenario</div>
+                    <div class="metric-value">Airport Defense</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Date & Time</div>
+                    <div class="metric-value">${new Date().toLocaleString()}</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Mission Duration</div>
+                    <div class="metric-value">14:32</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Status</div>
+                    <div class="metric-value" style="color: #00aa00;">SUCCESS</div>
+                </div>
+            </div>
+        </div>
+        <div class="section">
+            <h2>🎯 Swarm Fingerprint</h2>
+            <table>
+                <tr>
+                    <th>Swarm ID</th>
+                    <td>${document.getElementById('swarmId').textContent}</td>
+                </tr>
+                <tr>
+                    <th>Drone Count</th>
+                    <td>${state.drones.length}</td>
+                </tr>
+                <tr>
+                    <th>Formation</th>
+                    <td>${state.formation}</td>
+                </tr>
+                <tr>
+                    <th>RF Signature</th>
+                    <td>2.4G + 5.8G + 10.5G (${state.drones.filter(d => d.hardened).length} hardened)</td>
+                </tr>
+                <tr>
+                    <th>Threat Level</th>
+                    <td><span class="threat-critical">CRITICAL</span></td>
+                </tr>
+            </table>
+        </div>
+        <div class="section">
+            <h2>📊 Engagement Metrics</h2>
+            <div class="metric-grid">
+                <div class="metric-box">
+                    <div class="metric-label">Total Drones</div>
+                    <div class="metric-value">${state.drones.length}</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Drones Jammed</div>
+                    <div class="metric-value" style="color: #00aa00;">${jammedCount}</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Success Rate</div>
+                    <div class="metric-value">${state.drones.length > 0 ? Math.floor((jammedCount / state.drones.length) * 100) : 0}%</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Cost per Drone</div>
+                    <div class="metric-value">$167</div>
+                </div>
+            </div>
+            <div style="margin-top: 15px;">
+                <div class="metric-label">System Effectiveness</div>
+                <div class="effectiveness-bar">
+                    <div class="effectiveness-fill">${effectiveness}%</div>
+                </div>
+            </div>
+        </div>
+        <div class="section">
+            <h2>💰 ROI Calculation</h2>
+            <div class="metric-grid">
+                <div class="metric-box">
+                    <div class="metric-label">Protected Infrastructure</div>
+                    <div class="metric-value">$250M</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Total Engagement Cost</div>
+                    <div class="metric-value">$${jammedCount * 167}</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Cost Avoided (85% success)</div>
+                    <div class="metric-value">$212.5M</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">ROI</div>
+                    <div class="metric-value" style="color: #00aa00;">${roi}:1</div>
+                </div>
+            </div>
+        </div>
+        <div class="footer">
+            <strong>DISTRIBUTION: OFFICIAL USE ONLY</strong><br>
+            Generated: ${new Date().toISOString()}<br>
+            ChaosTech Defense LLC | Neuro Swarm Disruptor v14
+        </div>
+    </div>
+</body>
+</html>`;
+
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `NSD-AAB-${Date.now()}.html`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        // ==================== INFRASTRUCTURE SCANNER ====================
+        const vulnerabilities = {
+            airport: [
+                { name: 'Runway Lighting Control', severity: 'CRITICAL', vector: 'WiFi (2.4G)', impact: 'Complete blackout' },
+                { name: 'Air Traffic Control Radar', severity: 'CRITICAL', vector: '5.8G + 10.5G', impact: 'Spoofed targets' },
+                { name: 'Perimeter Fence Sensors', severity: 'HIGH', vector: 'LoRaWAN', impact: 'Blind zones created' },
+                { name: 'Baggage Handling System', severity: 'MEDIUM', vector: 'LTE (Band 7)', impact: 'Operations halted' },
+                { name: 'Terminal WiFi', severity: 'MEDIUM', vector: '2.4G/5G', impact: 'Passenger comms down' },
+                { name: 'Aircraft ILS System', severity: 'CRITICAL', vector: '111.975 MHz', impact: 'Landing guidance lost' }
+            ],
+            powerplant: [
+                { name: 'SCADA Network Gateway', severity: 'CRITICAL', vector: '4G/LTE', impact: 'Grid control compromised' },
+                { name: 'Turbine RPM Sensors', severity: 'CRITICAL', vector: 'ISM 915MHz', impact: 'Catastrophic failure risk' },
+                { name: 'Substation Breakers', severity: 'CRITICAL', vector: 'Cellular uplink', impact: 'Cascading outage' },
+                { name: 'Employee WiFi', severity: 'HIGH', vector: '5GHz', impact: 'Operational chaos' },
+                { name: 'Generator Fuel Pump', severity: 'CRITICAL', vector: 'IoT 802.15.4', impact: 'Backup system down' },
+                { name: 'Transformer Cooling', severity: 'HIGH', vector: '2.4G mesh', impact: 'Thermal overload' }
+            ],
+            hospital: [
+                { name: 'Patient Monitoring Systems', severity: 'CRITICAL', vector: 'WiFi 5GHz', impact: 'Patient safety at risk' },
+                { name: 'Operating Room Equipment', severity: 'CRITICAL', vector: 'Bluetooth 5.0', impact: 'Surgery interrupted' },
+                { name: 'Drug Infusion Pumps', severity: 'CRITICAL', vector: 'ISM bands', impact: 'Medication flow altered' },
+                { name: 'Emergency Call System', severity: 'CRITICAL', vector: 'Cellular', impact: 'Help requests blocked' },
+                { name: 'Laboratory Analyzers', severity: 'HIGH', vector: '2.4G', impact: 'Test results invalid' },
+                { name: 'Door Lock Access Control', severity: 'HIGH', vector: 'LTE-M', impact: 'Containment breached' }
+            ],
+            datacenter: [
+                { name: 'Server Management Network', severity: 'CRITICAL', vector: '5.8G + 10.5G', impact: 'Remote access blocked' },
+                { name: 'Cooling System Controllers', severity: 'CRITICAL', vector: 'WiFi 6E', impact: 'Thermal shutdown' },
+                { name: 'Power Distribution Unit', severity: 'CRITICAL', vector: 'LTE uplink', impact: 'Complete power loss' },
+                { name: 'Firewall Command & Control', severity: 'CRITICAL', vector: '4G/5G', impact: 'Security bypass' },
+                { name: 'Backup Generator Network', severity: 'HIGH', vector: 'ISM 900MHz', impact: 'Backup fails to engage' },
+                { name: 'Security Camera Feeds', severity: 'HIGH', vector: '2.4G mesh', impact: 'Blind spots everywhere' }
+            ]
+        };
+
+        function scanInfrastructure(target) {
+            const results = vulnerabilities[target];
+            const resultsDiv = document.getElementById('scanResults');
+            
+            resultsDiv.innerHTML = `<div style="color: #ffff00; margin-bottom: 6px; font-weight: bold;">🔴 SCANNING ${target.toUpperCase()}...</div>`;
+            
+            let delay = 0;
+            results.forEach((vuln, idx) => {
+                setTimeout(() => {
+                    const severity = vuln.severity === 'CRITICAL' ? '#ff0000' : vuln.severity === 'HIGH' ? '#ffaa00' : '#ffff00';
+                    const line = `
+                        <div style="border-bottom: 1px solid #003300; padding: 4px 0; margin-bottom: 4px;">
+                            <div style="color: ${severity}; font-weight: bold;">${vuln.name}</div>
+                            <div style="color: #00ff00; font-size: 8px;">Vector: ${vuln.vector}</div>
+                            <div style="color: #ff6600; font-size: 8px;">Impact: ${vuln.impact}</div>
+                        </div>
+                    `;
+                    resultsDiv.innerHTML += line;
+                    resultsDiv.scrollTop = resultsDiv.scrollHeight;
+                }, delay);
+                delay += 200;
+            });
+
+            setTimeout(() => {
+                const criticalCount = results.filter(r => r.severity === 'CRITICAL').length;
+                const summary = `<div style="color: #ff0000; margin-top: 6px; padding-top: 6px; border-top: 1px solid #ff0000; font-weight: bold;">⚠️ ${criticalCount}/${results.length} CRITICAL VULNERABILITIES FOUND</div>`;
+                resultsDiv.innerHTML += summary;
+            }, delay + 500);
+        }
+
+        // ==================== START ====================
+        initHeatmap();
+        animate();
+    </script>
