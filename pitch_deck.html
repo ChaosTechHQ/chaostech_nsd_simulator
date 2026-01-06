@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChaosTech Defense - Pitch Deck</title>
+    <style>
+        :root {
+            --font-family-display: Arial, sans-serif;
+            --font-weight-display: 600;
+            --font-family-content: Arial, sans-serif;
+            --font-weight-content: 400;
+            --font-size-content: 16px;
+            --line-height-content: 1.4;
+        }
+
+        body.theme-dark {
+            --color-bg-base: #0f172a;
+            --color-bg-elevated: #020617;
+            --color-bg-surface: #1e293b;
+            --color-bg-muted: #334155;
+            --color-text-primary: #f1f5f9;
+            --color-text-secondary: #cbd5e1;
+            --color-text-muted: #94a3b8;
+            --color-text-accent: #38bdf8;
+            --color-primary: #38bdf8;
+            --color-primary-foreground: #0f172a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family-content);
+            font-weight: var(--font-weight-content);
+            font-size: var(--font-size-content);
+            line-height: var(--line-height-content);
+            overflow-x: hidden;
+        }
+
+        .slide {
+            width: 960px;
+            height: 540px;
+            margin: 0 auto 20px;
+            display: flex;
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .row { flex-direction: row; }
+        .col { flex-direction: column; }
+        .center {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .space-between { justify-content: space-between; }
+        .items-center { align-items: center; }
+        .items-start { align-items: flex-start; }
+        .fill-width { flex: 1; }
+        .fill-height { flex: 1; display: flex; flex-direction: column; }
+
+        .gap-sm { gap: 0.5rem; }
+        .gap-md { gap: 1rem; }
+        .gap-lg { gap: 1.5rem; }
+        .gap-xl { gap: 2rem; }
+
+        .p-4 { padding: 1rem; }
+        .p-6 { padding: 1.5rem; }
+        .p-8 { padding: 2rem; }
+        .p-12 { padding: 3rem; }
+        .p-16 { padding: 4rem; }
+
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mb-6 { margin-bottom: 1.5rem; }
+        .mb-8 { margin-bottom: 2rem; }
+        .mb-12 { margin-bottom: 3rem; }
+
+        .mt-2 { margin-top: 0.5rem; }
+        .mt-4 { margin-top: 1rem; }
+        .mt-6 { margin-top: 1.5rem; }
+        .mt-8 { margin-top: 2rem; }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--font-family-display);
+            font-weight: var(--font-weight-display);
+            line-height: 1.2;
+            margin: 0;
+        }
+
+        h1 { font-size: 3rem; }
+        h2 { font-size: 2.25rem; }
+        h3 { font-size: 1.75rem; }
+        h4 { font-size: 1.5rem; }
+
+        .text-6xl { font-size: 3.75rem; }
+        .text-5xl { font-size: 3rem; }
+        .text-4xl { font-size: 2.25rem; }
+        .text-3xl { font-size: 1.875rem; }
+        .text-2xl { font-size: 1.5rem; }
+        .text-xl { font-size: 1.25rem; }
+        .text-lg { font-size: 1.125rem; }
+        .text-sm { font-size: 0.875rem; }
+        .text-xs { font-size: 0.75rem; }
+
+        .font-bold { font-weight: 700; }
+        .font-semibold { font-weight: 600; }
+
+        .text-center { text-align: center; }
+        .text-left { text-align: left; }
+
+        .opacity-90 { opacity: 0.9; }
+        .opacity-80 { opacity: 0.8; }
+
+        ul, ol {
+            margin-left: 2rem;
+            line-height: 1.8;
+        }
+
+        li { margin-bottom: 0.75rem; }
+        li:last-child { margin-bottom: 0; }
+
+        p { margin-bottom: 1rem; }
+    </style>
+</head>
+<body class="theme-dark">
+
+    <!-- SLIDE 1: TITLE -->
+    <section class="slide p-16 col center" style="background-color: #020617; color: #f1f5f9;">
+        <h1 class="text-6xl mb-4" style="color: #38bdf8;">ChaosTech Defense</h1>
+        <p class="text-2xl mb-8" style="color: #cbd5e1;">Neuro Swarm Disruptor</p>
+        <p class="text-lg" style="color: #cbd5e1;">RF/AI-Powered Counter-UAS for Military Defense</p>
+        <p class="text-sm mt-8" style="color: #94a3b8;">Daivon Brown, CEO | DaivonBrown@ChaosTechDefenseLLC.com</p>
+    </section>
+
+    <!-- SLIDE 2: THE PROBLEM -->
+    <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+        <h2 class="mb-8" style="color: #38bdf8;">The Problem: Swarm Threats</h2>
+        <div class="fill-height">
+            <ul class="text-lg" style="color: #cbd5e1;">
+                <li>Enemy drone swarms overwhelm traditional air defense systems</li>
+                <li>Current counter-UAS relies on radar + kinetic interception (slow, expensive)</li>
+                <li>Military lacks affordable, rapid disruption technology</li>
+                <li>Existing RF solutions are bulky, require constant repositioning</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- SLIDE 3: OUR SOLUTION -->
+    <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+        <h2 class="mb-6" style="color: #38bdf8;">NSD: The Solution</h2>
+        <p class="text-lg mb-6" style="color: #cbd5e1;">
+            AI-powered RF disruptor that <span style="color: #ffff00; font-weight: bold;">detects, identifies, and disables</span> hostile drone swarms in real-time.
+        </p>
+        <div class="fill-height">
+            <ul class="text-lg" style="color: #cbd5e1;">
+                <li>✓ Real-time RF fingerprinting & drone classification</li>
+                <li>✓ Swarm cohesion analysis & prediction</li>
+                <li>✓ Precision frequency hopping disruption</li>
+                <li>✓ Multi-target link spoofing and redirection</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- SLIDE 4: MARKET OPPORTUNITY -->
+    <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+        <h2 class="mb-8" style="color: #38bdf8;">Market Opportunity</h2>
+        <div class="fill-height row gap-lg">
+            <div class="fill-width" style="background-color: #1e293b; color: #f1f5f9; padding: 2rem;">
+                <h3 class="mb-4" style="color: #38bdf8;">TAM: $8.7B</h3>
+                <p style="color: #cbd5e1; font-size: 0.9rem;">Global counter-UAS market by 2030</p>
+            </div>
+            <div class="fill-width" style="background-color: #1e293b; color: #f1f5f9; padding: 2rem;">
+                <h3 class="mb-4" style="color: #38bdf8;">SAM: $1.2B</h3>
+                <p style="color: #cbd5e1; font-size: 0.9rem;">US Military + Allied nations procurement</p>
+            </div>
+            <div class="fill-width" style="background-color: #1e293b; color: #f1f5f9; padding: 2rem;">
+                <h3 class="mb-4" style="color: #38bdf8;">SOM: $150M</h3>
+                <p style="color: #cbd5e1; font-size: 0.9rem;">Year 1-3 addressable market (US Army only)</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 5: COMPETITIVE ADVANTAGE -->
+    <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+        <h2 class="mb-8" style="color: #38bdf8;">Why ChaosTech Wins</h2>
+        <div class="fill-height">
+            <ul class="text-lg" style="color: #cbd5e1;">
+                <li><span style="color: #ffff00; font-weight: bold;">First-mover advantage:</span> Only AI-native RF disruptor on market</li>
+                <li><span style="color: #ffff00; font-weight: bold;">Real-time intelligence:</span> Swarm cohesion analysis (no competitors offer this)</li>
+                <li><span style="color: #ffff00; font-weight: bold;">Modular deployment:</span> Software-centric, works with existing military RF hardware</li>
+                <li><span style="color: #ffff00; font-weight: bold;">IP protected:</span> Proprietary AI algorithms + RF protocols</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- SLIDE 6: TRACTION -->
+    <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+        <h2 class="mb-8" style="color: #38bdf8;">Traction & Proof of Concept</h2>
+        <div class="fill-height">
+            <ul class="text-lg" style="color: #cbd5e1;">
+                <li>✓ Live interactive simulator demonstrated (NSD v14)</li>
+                <li>✓ RF detection algorithms validated in simulation (multi-band support)</li>
+                <li>✓ Swarm cohesion analysis working in real-time</li>
+                <li>✓ Interactive demo available: <span style="color: #38bdf8; text-decoration: underline;">https://ChaosTechHQ.github.io/chaostech_nsd_simulator</span></li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- SLIDE 7: BUSINESS MODEL -->
+    <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+        <h2 class="mb-6" style="color: #38bdf8;">Revenue Model</h2>
+        <p class="text-lg mb-6" style="color: #cbd5e1;">
+            Multi-stream monetization targeting military procurement + commercial variants.
+        </p>
+        <div class="fill-height row gap-lg">
+            <div class="fill-width" style="background-color: #1e293b; color: #f1f5f9; padding: 1.5rem;">
+                <h4 style="color: #38bdf8;">Government Sales</h4>
+                <p style="color: #cbd5e1; font-size: 0.9rem;">SAM.gov contracts, FMS to allies, DPA awards</p>
+            </div>
+            <div class="fill-width" style="background-color: #1e293b; color: #f1f5f9; padding: 1.5rem;">
+                <h4 style="color: #38bdf8;">Licensing</h4>
+                <p style="color: #cbd5e1; font-size: 0.9rem;">RF protocols, AI models to integrators</p>
+            </div>
+            <div class="fill-width" style="background-color: #1e293b; color: #f1f5f9; padding: 1.5rem;">
+                <h4 style="color: #38bdf8;">Support</h4>
+                <p style="color: #cbd5e1; font-size: 0.9rem;">Training, field service, software SaaS</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 8: TEAM -->
+    <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+        <h2 class="mb-8" style="color: #38bdf8;">The Team</h2>
+        <div class="fill-height row gap-lg">
+            <div class="fill-width" style="background-color: #1e293b; color: #f1f5f9; padding: 2rem;">
+                <h3 style="color: #38bdf8;">Daivon Brown</h3>
+                <p style="color: #cbd5e1; margin-top: 0.5rem;"><span style="color: #ffff00;">Founder & CEO</span></p>
+                <p style="color: #94a3b8; font-size: 0.85rem; margin-top: 0.5rem;">Defense tech visionary. Building RF/AI platform. Securing seed funding with Boost VC.</p>
+            </div>
+            <div class="fill-width" style="background-color: #1e293b; color: #f1f5f9; padding: 2rem;">
+                <h3 style="color: #38bdf8;">Seeking: CTO/Co-Founder</h3>
+                <p style="color: #cbd5e1; margin-top: 0.5rem;"><span style="color: #ffff00;">RF Engineer or AI/ML Lead</span></p>
+                <p style="color: #94a3b8; font-size: 0.85rem; margin-top: 0.5rem;">Equity stake. Shape defense tech future. Government connections valued.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 9: USE OF FUNDS -->
+    <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+        <h2 class="mb-8" style="color: #38bdf8;">Use of Funds (Seed Round)</h2>
+        <div class="fill-height">
+            <div style="margin-bottom: 1rem;">
+                <p style="color: #ffff00; font-weight: bold;">$250K - $500K Seed Allocation:</p>
+            </div>
+            <ul class="text-lg" style="color: #cbd5e1;">
+                <li>40% - RF hardware integration & testing (boards, antennas, test lab)</li>
+                <li>30% - Technical cofounder recruitment & engineering team (3-4 hires)</li>
+                <li>20% - Government compliance & CAGE/DUNS registration</li>
+                <li>10% - Operations, legal, and pitch events</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- SLIDE 10: MILESTONES -->
+    <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+        <h2 class="mb-8" style="color: #38bdf8;">18-Month Roadmap</h2>
+        <div class="fill-height">
+            <ul class="text-lg" style="color: #cbd5e1;">
+                <li><span style="color: #38bdf8; font-weight: bold;">Q1 2026:</span> Hardware integration, CTO onboard, CAGE registration</li>
+                <li><span style="color: #38bdf8; font-weight: bold;">Q2-Q3 2026:</span> Live RF testing, SAM.gov pre-qualification, first government customer pilot</li>
+                <li><span style="color: #38bdf8; font-weight: bold;">Q4 2026 - Q2 2027:</span> Scaled production, Series A prep, FMS partner alignment</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- SLIDE 11: THE ASK -->
+    <section class="slide p-16 col center" style="background-color: #020617; color: #f1f5f9;">
+        <h2 class="mb-8" style="color: #ffff00;">The Ask</h2>
+        <p class="text-4xl mb-8" style="color: #38bdf8; font-weight: bold;">$250K - $500K Seed Funding</p>
+        <p class="text-xl mb-12" style="color: #cbd5e1;">
+            To launch the first AI-native counter-UAS disruptor<br/>and capture the $8.7B defense market
+        </p>
+        <p class="text-lg" style="color: #94a3b8;">
+            <span style="color: #ffff00; font-weight: bold;">In return:</span> Equity stake, board seat, access to government pipeline
+        </p>
+    </section>
+
+    <!-- SLIDE 12: CONTACT -->
+    <section class="slide p-16 col center" style="background-color: #0f172a; color: #f1f5f9;">
+        <h2 class="mb-12" style="color: #38bdf8;">Let's Win This Together</h2>
+        <div style="background-color: #1e293b; padding: 3rem; border: 2px solid #38bdf8;">
+            <p class="text-xl mb-4" style="color: #f1f5f9;"><span style="color: #ffff00;">Daivon Brown</span><br/>Founder & CEO</p>
+            <p class="text-lg mb-2" style="color: #cbd5e1;">📧 DaivonBrown@ChaosTechDefenseLLC.com</p>
+            <p class="text-lg mb-2" style="color: #cbd5e1;">🎯 Live Demo:</p>
+            <p class="text-sm" style="color: #38bdf8; text-decoration: underline;">https://ChaosTechHQ.github.io/chaostech_nsd_simulator</p>
+            <p class="text-xs mt-6" style="color: #94a3b8;">ChaosTech Defense LLC | Suitland-Silver Hill, MD</p>
+        </div>
+    </section>
+
+</body>
+</html>
