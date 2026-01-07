@@ -3,240 +3,347 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChaosTech NSD v14 - Simulator</title>
+    <title>ChaosTech NSD v16 - Investor-Ready Simulation</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { width: 100%; height: 100%; font-family: 'Courier New', monospace; overflow: hidden; background: #0a0e27; }
-        body { color: #00ff00; }
-        .container { display: flex; width: 100%; height: 100%; }
+        html, body { width: 100%; height: 100%; font-family: 'Courier New', monospace; overflow: hidden; background: #0a0e27; color: #00ff00; }
+        
+        /* DEMO MODE BANNER - Always Visible */
+        #demoModeBanner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #ff0000;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            font-weight: bold;
+            z-index: 10001;
+            font-size: 13px;
+            letter-spacing: 1px;
+        }
+        
+        /* COMPLIANCE BANNER */
+        #complianceBanner {
+            position: fixed;
+            top: 40px;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.9);
+            border-bottom: 2px solid #ffff00;
+            color: #ffff00;
+            padding: 8px 12px;
+            z-index: 10000;
+            font-size: 10px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        
+        body { padding-top: 74px; }
+        
+        .container { display: flex; width: 100%; height: calc(100vh - 74px); }
         .radar { flex: 2; background: #0a0e27; border-right: 2px solid #00ff00; position: relative; overflow: hidden; }
         .panels { flex: 1; background: #0a0e27; border-left: 2px solid #00ff00; overflow-y: auto; display: flex; flex-direction: column; }
         canvas { display: block; width: 100%; height: 100%; }
-        .panel { border: 2px solid #00ff00; margin: 8px; padding: 12px; background: #0a0e27; color: #00ff00; font-size: 11px; }
-        .panel-title { font-weight: bold; color: #ffff00; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
-        .metric { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #003300; }
+        
+        .panel {
+            border: 2px solid #00ff00;
+            margin: 8px;
+            padding: 12px;
+            background: #0a0e27;
+            color: #00ff00;
+            font-size: 11px;
+            flex-shrink: 0;
+        }
+        
+        .panel-title { font-weight: bold; color: #ffff00; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; font-size: 10px; }
+        .metric { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #003300; font-size: 10px; }
         .metric-label { color: #00ff00; }
         .metric-value { color: #ffff00; font-weight: bold; }
+        
+        button {
+            background: #0a0e27;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 6px 10px;
+            margin: 4px;
+            cursor: pointer;
+            font-size: 9px;
+            font-weight: bold;
+            transition: all 0.2s;
+            font-family: 'Courier New', monospace;
+        }
+        
+        button:hover { background: #00ff00; color: #0a0e27; }
+        button.active { background: #ffff00; color: #0a0e27; }
+        
+        select {
+            background: #0a0e27;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 6px;
+            margin: 4px 0;
+            width: 100%;
+            font-size: 9px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+        }
+        
+        select option { background: #0a0e27; color: #00ff00; }
+        
+        .swarm-cohesion-panel {
+            position: absolute;
+            top: 20px;
+            right: 10px;
+            width: 240px;
+            background: rgba(0,0,0,0.9);
+            border: 2px solid #ff00ff;
+            padding: 12px;
+            font-size: 10px;
+            z-index: 100;
+            border-radius: 6px;
+        }
+        
+        .performance-panel {
+            position: absolute;
+            top: 200px;
+            left: 10px;
+            width: 280px;
+            max-height: 300px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.9);
+            border: 2px solid #00ff00;
+            padding: 10px;
+            font-size: 9px;
+            z-index: 100;
+            border-radius: 6px;
+        }
+        
+        .cohesion-bar {
+            width: 100%;
+            height: 12px;
+            background: #333;
+            border: 1px solid #ff00ff;
+            margin: 6px 0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .cohesion-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000);
+            transition: width 0.3s ease;
+        }
+        
+        .heatmap-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; margin-top: 6px; }
+        .heatmap-cell { width: 100%; height: 8px; border: 1px solid #00ff00; }
+        
+        .compliance-footer {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 8px;
+            color: #999;
+            background: rgba(0,0,0,0.9);
+            padding: 8px 12px;
+            border-radius: 4px;
+            max-width: 200px;
+            border: 1px solid #444;
+            z-index: 999;
+        }
+        
         .threat-high { color: #ff0000; }
         .threat-med { color: #ffaa00; }
         .threat-low { color: #00ff00; }
-        button { background: #0a0e27; color: #00ff00; border: 1px solid #00ff00; padding: 6px 12px; margin: 4px; cursor: pointer; font-size: 10px; font-weight: bold; transition: all 0.2s; }
-        button:hover { background: #00ff00; color: #0a0e27; }
-        button.active { background: #00ff00; color: #0a0e27; }
-        .fingerprint-box { background: #1a1e37; border: 2px solid #ffff00; padding: 8px; margin: 4px 0; }
-        .fingerprint-id { color: #ffff00; font-weight: bold; }
-        .fingerprint-sig { color: #00ff00; font-size: 9px; }
-        .heatmap-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; margin-top: 6px; }
-        .heatmap-cell { width: 100%; aspect-ratio: 1; border: 1px solid #00ff00; }
-        #swarmFragPanel { position: absolute; top: 20px; right: 10px; width: 220px; background: rgba(0,0,0,0.85); border: 2px solid #ff00ff; padding: 10px; font-size: 11px; border-radius: 8px; z-index: 100; }
-        #cohesionBar { width: 100%; height: 12px; background: #333; border: 1px solid #ff00ff; margin: 5px 0; border-radius: 4px; overflow: hidden; }
-        #cohesionFill { height: 100%; width: 0%; background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000); transition: width 0.3s ease; }
-        #spoofBtn { width: 100%; margin-top: 8px; background: #ff00ff; color: #000; border: 1px solid #ff00ff; padding: 6px; cursor: pointer; font-weight: bold; border-radius: 4px; font-size: 11px; }
-        #spoofBtn:hover { background: #cc00cc; box-shadow: 0 0 10px #ff00ff; }
-        .timeline-container { padding: 10px; border: 2px solid #00ff00; margin: 8px; }
-        .export-btn { background: #ff0000; color: #fff; border: 1px solid #ff0000; padding: 8px 16px; font-weight: bold; }
-        .export-btn:hover { background: #cc0000; }
     </style>
 </head>
 <body>
+    <!-- RED DEMO MODE BANNER -->
+    <div id="demoModeBanner">
+        🔴 DEMO MODE - SIMULATION ONLY - NO RF TRANSMIT - ALL ACTIONS SIMULATED
+    </div>
+    
+    <!-- COMPLIANCE BANNER -->
+    <div id="complianceBanner">
+        SIMULATION ONLY • NO RF TRANSMIT • CONCEPT DEMO UI | This page simulates detection and analysis workflows only. It does not perform jamming, protocol spoofing, or network intrusion.
+    </div>
+    
+    <!-- COMPLIANCE FOOTER -->
+    <div class="compliance-footer">
+        <strong>⚠️ Demo Simulator:</strong> All actions simulated. Authorized use only.
+    </div>
+
     <div class="container">
+        <!-- RADAR DISPLAY -->
         <div class="radar" id="radarContainer">
             <canvas id="radarCanvas"></canvas>
-            <div id="swarmFragPanel">
-                <div style="color:#ff00ff;font-weight:bold;font-size:12px;">🎯 SWARM COHESION</div>
-                <div id="cohesionBar"><div id="cohesionFill"></div></div>
-                <div id="cohesionVal" style="color:#ffff00;margin:5px 0;">Cohesion: N/A</div>
-                <div id="hopPrediction" style="color:#00ffff;margin-top:5px;font-size:9px;">Freq: Detecting...</div>
-                <button id="spoofBtn" onclick="injectFalseAggregation()">🟣 SPOOF LINK</button>
-                <div id="spoofStatus" style="color:#00ff00;font-size:9px;margin-top:5px;"></div>
+            
+            <!-- SWARM COHESION PANEL -->
+            <div class="swarm-cohesion-panel">
+                <div style="color:#ff00ff; font-weight:bold; margin-bottom:8px;">🎯 SWARM COHESION</div>
+                <div class="cohesion-bar"><div class="cohesion-fill" id="cohesionFill"></div></div>
+                <div id="cohesionVal" style="color:#ffff00; margin:6px 0; font-size:9px;">Cohesion: N/A</div>
+                <div id="hopPrediction" style="color:#00ffff; margin-top:6px; font-size:9px;">Next Freq: Detecting...</div>
+                <button id="emulationBtn" onclick="activateProtocolEmulation()" style="width:100%; margin-top:8px; background:#ff00ff; color:#000; border:1px solid #ff00ff;">🟣 PROTOCOL EMULATION (SIM)</button>
+                <div id="emulationStatus" style="color:#00ff00; font-size:8px; margin-top:6px;"></div>
+            </div>
+            
+            <!-- PERFORMANCE METRICS PANEL -->
+            <div class="performance-panel">
+                <div class="panel-title">📊 PERFORMANCE METRICS</div>
+                <div class="metric"><span>Det. Speed</span><span id="detectionSpeed" class="metric-value">0 ms</span></div>
+                <div class="metric"><span>Det. Range</span><span id="detectionRange" class="metric-value">0 m</span></div>
+                <div class="metric"><span>Det. Acc</span><span id="detectionAccuracy" class="metric-value">0%</span></div>
+                <div class="metric"><span>Track Range</span><span id="trackingRange" class="metric-value">0 m</span></div>
+                <div class="metric"><span>Track Acc</span><span id="trackingAccuracy" class="metric-value">0%</span></div>
+                <div class="metric"><span>Mit. Success</span><span id="mitigationSuccess" class="metric-value">0%</span></div>
+                <div class="metric"><span>Coverage</span><span id="coverage" class="metric-value">0 m²</span></div>
+                <div class="metric"><span>Reliability</span><span id="reliability" class="metric-value">0%</span></div>
+                <div class="metric"><span>Score</span><span id="score" class="metric-value">0</span></div>
             </div>
         </div>
 
+        <!-- CONTROL PANELS -->
         <div class="panels">
-            <div class="panel" style="flex: 0.8;">
-                <div class="panel-title">THREAT MATRIX FINGERPRINT</div>
-                <div class="fingerprint-box">
-                    <div class="fingerprint-id" id="swarmId">SWARM-2026-001-DIAMOND</div>
-                    <div class="fingerprint-sig" id="rfSig">RF: 2.4G, 5.8G</div>
+            <!-- THREAT MATRIX -->
+            <div class="panel">
+                <div class="panel-title">🎯 THREAT MATRIX & FINGERPRINT</div>
+                <div style="background: #1a1e37; border: 2px solid #ffff00; padding: 8px; margin: 4px 0;">
+                    <div style="color: #ffff00; font-weight: bold; font-size: 9px;" id="swarmId">SWARM-2026-001-DIAMOND</div>
+                    <div style="color: #00ff00; font-size: 8px;" id="rfSig">RF: 2.4G + 5.8G + 10.5G</div>
                 </div>
                 <div class="metric">
-                    <span class="metric-label">Formation</span>
+                    <span>Formation</span>
                     <span class="metric-value" id="formation">DIAMOND</span>
                 </div>
                 <div class="metric">
-                    <span class="metric-label">Threat Level</span>
+                    <span>Threat Level</span>
                     <span class="metric-value threat-high" id="threatLevel">CRITICAL</span>
                 </div>
-                <div class="metric">
-                    <span class="metric-label">Detected</span>
-                    <span class="metric-value" id="detected">0</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Threats</span>
-                    <span class="metric-value threat-high" id="threats">0</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Jammed</span>
-                    <span class="metric-value threat-low" id="jammed">0</span>
-                </div>
+                <div class="metric"><span>Detected</span><span class="metric-value" id="detected">0</span></div>
+                <div class="metric"><span>Threats</span><span class="metric-value threat-high" id="threats">0</span></div>
+                <div class="metric"><span>Mitigated (Sim)</span><span class="metric-value threat-low" id="mitigated">0</span></div>
             </div>
-
-            <div class="panel" style="flex: 0.7;">
-                <div class="panel-title">SPAWN CONTROLS</div>
-                <button onclick="addDrone('Hostile')">+ Hostile</button>
-                <button onclick="addDrone('Ally')">+ Ally</button>
-                <button onclick="spawnSwarm()">🐝 SWARM x5</button>
-                <button onclick="resetSimulation()">RESET</button>
-                <div style="margin-top: 6px;">
+            
+            <!-- SPAWN CONTROLS -->
+            <div class="panel">
+                <div class="panel-title">📍 SPAWN CONTROLS</div>
+                <button onclick="addDrone('Hostile')" style="width:48%; margin-right:2%;">+ Hostile</button>
+                <button onclick="addDrone('Ally')" style="width:48%;">+ Ally</button>
+                <button onclick="spawnSwarm()" style="width:48%; margin-right:2%;">🐝 SWARM x5</button>
+                <button onclick="resetSimulation()" style="width:48%;">RESET</button>
+                <div style="margin-top:6px;">
                     <select id="weather" onchange="updateEnvironment()">
                         <option value="clear">Clear</option>
-                        <option value="rain">Rain -22</option>
-                        <option value="storm">Heavy Storm -28</option>
-                        <option value="snow">Snow -18</option>
+                        <option value="rain">Rain (-22%)</option>
+                        <option value="storm">Storm (-28%)</option>
+                        <option value="snow">Snow (-18%)</option>
                     </select>
                     <select id="terrain" onchange="updateEnvironment()">
                         <option value="open">Open Terrain</option>
-                        <option value="urban">Urban -8</option>
-                        <option value="mountain">Mountain -10</option>
+                        <option value="urban">Urban (-8%)</option>
+                        <option value="mountain">Mountain (-10%)</option>
                     </select>
                 </div>
             </div>
-
-            <div class="panel" style="flex: 0.5;">
-                <div class="panel-title">FORMATION</div>
-                <button onclick="setFormation('SCATTER')">SCATTER</button>
-                <button onclick="setFormation('LINE')">LINE</button>
-                <button onclick="setFormation('WEDGE')">WEDGE</button>
-                <button onclick="setFormation('DIAMOND')">DIAMOND</button>
+            
+            <!-- FORMATION -->
+            <div class="panel">
+                <div class="panel-title">🔷 FORMATION</div>
+                <button onclick="setFormation('SCATTER')" style="width:23%; margin-right:1%;">SCATTER</button>
+                <button onclick="setFormation('LINE')" style="width:23%; margin-right:1%;">LINE</button>
+                <button onclick="setFormation('WEDGE')" style="width:23%; margin-right:1%;">WEDGE</button>
+                <button onclick="setFormation('DIAMOND')" style="width:23%;">DIAMOND</button>
             </div>
-
-            <div class="panel" style="flex: 0.6;">
-                <div class="panel-title">PRIORITY</div>
+            
+            <!-- PRIORITY -->
+            <div class="panel">
+                <div class="panel-title">⚠️ PRIORITY</div>
                 <div id="priorityBars"></div>
             </div>
-
-            <div class="panel" style="flex: 0.4;">
-                <div class="panel-title">EFFECTIVENESS</div>
-                <div class="metric">
-                    <span class="metric-label">Success</span>
-                    <span class="metric-value" id="effectiveness">0</span>
-                </div>
-            </div>
-
-            <div class="panel" style="flex: 0.7;">
-                <div class="panel-title">HEATMAP</div>
+            
+            <!-- HEATMAP -->
+            <div class="panel">
+                <div class="panel-title">🔥 HEATMAP</div>
                 <div class="heatmap-grid" id="heatmap"></div>
             </div>
-
-            <div class="panel" style="flex: 0.7;">
-                <div class="panel-title">RF SIGNATURES</div>
+            
+            <!-- RF SIGNATURES -->
+            <div class="panel">
+                <div class="panel-title">📡 RF SIGNATURES</div>
                 <div id="rfSignatures" style="font-size: 9px;"></div>
             </div>
-
-            <div class="panel" style="flex: 0.7;">
-                <div class="panel-title">🚨 DISRUPTION TARGETS</div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
-                    <button id="policeBtn" onclick="toggleDisruption('police')" style="font-size: 9px; padding: 4px;">🚓 Police</button>
-                    <button id="fireBtn" onclick="toggleDisruption('fire')" style="font-size: 9px; padding: 4px;">🚒 Fire/EMS</button>
-                    <button id="militaryBtn" onclick="toggleDisruption('military')" style="font-size: 9px; padding: 4px;">🎖️ Military</button>
-                    <button id="cellBtn" onclick="toggleDisruption('cell')" style="font-size: 9px; padding: 4px;">📱 Cellular</button>
-                    <button id="lteBtn" onclick="toggleDisruption('lte')" style="font-size: 9px; padding: 4px;">📡 LTE/WiFi</button>
-                    <button id="triangBtn" onclick="toggleDisruption('triangulation')" style="font-size: 9px; padding: 4px;">🎯 Triangulation</button>
-                </div>
+            
+            <!-- PROTECTED ASSETS -->
+            <div class="panel">
+                <div class="panel-title">🛡️ PROTECTED ASSETS (SIM)</div>
+                <button onclick="toggleAsset('airport')" style="width:48%; margin-right:2%; font-size:8px; padding:4px;">✈️ Airport</button>
+                <button onclick="toggleAsset('stadium')" style="width:48%; font-size:8px; padding:4px;">🏟️ Stadium</button>
+                <button onclick="toggleAsset('base')" style="width:48%; margin-right:2%; font-size:8px; padding:4px;">🪖 Base</button>
+                <button onclick="toggleAsset('convoy')" style="width:48%; font-size:8px; padding:4px;">🚚 Convoy</button>
             </div>
-
-            <div class="panel" style="flex: 0.5;">
-                <div class="panel-title">ACTIONS</div>
-                <button onclick="globalJam()">GLOBAL JAM</button>
-                <button onclick="selectiveJam()">SELECTIVE JAM</button>
-                <button class="export-btn" onclick="exportAAB()">EXPORT AAB</button>
+            
+            <!-- ACTIONS -->
+            <div class="panel">
+                <div class="panel-title">🎮 ACTIONS</div>
+                <button onclick="globalMitigation()">WIDE-AREA MITIGATION (SIM)</button>
+                <button onclick="selectiveMitigation()">TARGETED MITIGATION (SIM)</button>
+                <button onclick="toggleDynamicMode()" id="dynamicBtn">DYNAMIC MODE (SIM)</button>
+                <button onclick="exportAAR()" style="background:#ff6600; border-color:#ff6600;">EXPORT AAR</button>
             </div>
-
-            <div class="panel" style="flex: 0.5;">
-                <div class="panel-title">PREDICT AI</div>
-                <div class="metric">
-                    <span class="metric-label">Confidence</span>
-                    <span class="metric-value" id="aiConfidence">0</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Next Move</span>
-                    <span class="metric-value" id="aiPrediction">Analyzing...</span>
-                </div>
+            
+            <!-- PREDICT AI -->
+            <div class="panel">
+                <div class="panel-title">🤖 PREDICT AI</div>
+                <div class="metric"><span>Approaching</span><span class="metric-value" id="approaching">0</span></div>
+                <div class="metric"><span>Avg Speed</span><span class="metric-value" id="avgSpeed">0</span></div>
+                <div class="metric"><span>ETA (s)</span><span class="metric-value" id="eta">N/A</span></div>
             </div>
-
-            <div class="panel" style="flex: 0.5;">
-                <div class="panel-title">PRECISION</div>
-                <div class="metric">
-                    <span class="metric-label">Targeting Accuracy</span>
-                    <span class="metric-value" id="precision">0</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Collision Avoidance</span>
-                    <span class="metric-value" id="collision">ACTIVE</span>
-                </div>
+            
+            <!-- PRECISION -->
+            <div class="panel">
+                <div class="panel-title">🎯 PRECISION</div>
+                <div class="metric"><span>Targeting Acc</span><span class="metric-value" id="precision">0%</span></div>
+                <div class="metric"><span>Collision Avoid</span><span class="metric-value" id="collision">ACTIVE</span></div>
             </div>
-
-            <div class="panel" style="flex: 0.8;">
-                <div class="panel-title">TRIANGULATION ORIGIN</div>
-                <div id="triangulationData" style="font-size: 9px; line-height: 1.8;">
-                    <div class="metric" style="border: none;">
-                        <span>Signal Strength</span>
-                        <span class="metric-value" id="signalStrength">-85dBm</span>
-                    </div>
-                    <div class="metric" style="border: none;">
-                        <span>Accuracy Radius</span>
-                        <span class="metric-value" id="accuracy">15m</span>
-                    </div>
-                    <div class="metric" style="border: none;">
-                        <span>Latitude</span>
-                        <span class="metric-value" id="latitude" style="font-size: 10px;">38.8951°N</span>
-                    </div>
-                    <div class="metric" style="border: none;">
-                        <span>Longitude</span>
-                        <span class="metric-value" id="longitude" style="font-size: 10px;">-77.0369°W</span>
-                    </div>
-                </div>
-                <div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid #003300; font-size: 8px; color: #ffff00;">
-                    Origin: Washington, DC
-                </div>
-            </div>
-
-            <div class="timeline-container">
-                <div class="panel-title">🏢 INFRASTRUCTURE SCANNER</div>
-                <div style="font-size: 10px; color: #ffff00; margin-bottom: 8px;">Real-time Network Penetration Analysis</div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px;">
-                    <button onclick="scanInfrastructure('airport')" style="font-size: 9px; padding: 6px; background: #1a1e37; border: 1px solid #ff0000;">Airport</button>
-                    <button onclick="scanInfrastructure('powerplant')" style="font-size: 9px; padding: 6px; background: #1a1e37; border: 1px solid #ff0000;">Power Plant</button>
-                    <button onclick="scanInfrastructure('hospital')" style="font-size: 9px; padding: 6px; background: #1a1e37; border: 1px solid #ff0000;">Hospital</button>
-                    <button onclick="scanInfrastructure('datacenter')" style="font-size: 9px; padding: 6px; background: #1a1e37; border: 1px solid #ff0000;">Data Center</button>
-                </div>
-                <div id="scanResults" style="font-size: 9px; line-height: 1.6; background: #0a0e27; border: 1px solid #ff0000; padding: 8px; max-height: 120px; overflow-y: auto; color: #ff0000;">
-                    <div style="color: #00ff00;">Ready to scan...</div>
-                </div>
+            
+            <!-- TRIANGULATION -->
+            <div class="panel">
+                <div class="panel-title">📍 TRIANGULATION ORIGIN</div>
+                <div class="metric" style="border:none;"><span>Signal</span><span class="metric-value" id="signal">-85dBm</span></div>
+                <div class="metric" style="border:none;"><span>Accuracy</span><span class="metric-value" id="accuracy">±15m</span></div>
+                <div class="metric" style="border:none;"><span>Lat</span><span class="metric-value" id="lat">38.8951°N</span></div>
+                <div class="metric" style="border:none;"><span>Lon</span><span class="metric-value" id="lon">-77.0369°W</span></div>
+                <div style="margin-top:6px; padding-top:6px; border-top:1px solid #003300; font-size:8px; color:#ffff00;">📍 Washington, DC</div>
             </div>
         </div>
     </div>
 
     <script>
-        // STATE
+        // ==================== GLOBAL STATE ====================
         const state = {
             drones: [],
-            jammed: new Set(),
-            jamActive: false,
-            selectiveActive: false,
             formation: 'DIAMOND',
             weather: 'clear',
             terrain: 'open',
-            effectivenessBase: 100,
+            jamActive: false,
+            selectiveActive: false,
             missionStart: Date.now(),
             missionLog: [],
-            droneCounter: 0
+            droneCounter: 0,
+            dynamicMode: false,
+            dynamicInterval: null,
+            score: 0,
+            accuracyDebuff: 0,
+            protectedAssets: {}
         };
 
         const weatherMods = { clear: 0, rain: -22, storm: -28, snow: -18 };
         const terrainMods = { open: 0, urban: -8, mountain: -10 };
 
-        // CANVAS - FIXED: Initialize after DOM loads
+        // ==================== CANVAS ====================
         let canvas, ctx, radarContainer;
 
         function initCanvas() {
@@ -245,66 +352,50 @@
             canvas.width = radarContainer.clientWidth;
             canvas.height = radarContainer.clientHeight;
             ctx = canvas.getContext('2d');
-            console.log('✓ Canvas initialized:', canvas.width, 'x', canvas.height);
         }
 
-        // DRONE CLASS - With Formation Support & Fixed Edge Wrapping
+        // ==================== DRONE CLASS ====================
         class Drone {
-            constructor(type, formationPos = null) {
-                this.id = 'DRONE-' + state.droneCounter++;
+            constructor(type) {
+                this.id = `DRONE-${++state.droneCounter}`;
                 this.type = type;
-                this.formationOffset = formationPos || { x: 0, y: 0 };
-                this.x = canvas.width / 2 + this.formationOffset.x;
-                this.y = canvas.height / 2 + this.formationOffset.y;
-                this.vx = (Math.random() - 0.5) * 1.5;
-                this.vy = (Math.random() - 0.5) * 1.5;
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
                 this.threat = type === 'Hostile' ? Math.random() * 100 : 0;
                 this.jammed = false;
                 this.rfBand = ['2.4G', '5.8G', '10.5G'][Math.floor(Math.random() * 3)];
                 this.hardened = Math.random() > 0.8;
-                this.color = type === 'Hostile' ? '#ff0000' : '#00ff00';
-                this.isRedirected = false;
+                this.redirected = false;
                 this.targetX = null;
                 this.targetY = null;
             }
 
             update() {
                 if (this.jammed) return;
-
-                if (this.isRedirected && this.targetX !== null && this.targetY !== null) {
+                if (this.redirected && this.targetX !== null) {
                     const dx = this.targetX - this.x;
                     const dy = this.targetY - this.y;
                     const dist = Math.sqrt(dx*dx + dy*dy);
                     if (dist > 3) {
-                        this.x += (dx / dist) * 2.5;
-                        this.y += (dy / dist) * 2.5;
+                        this.x += (dx / dist) * 2;
+                        this.y += (dy / dist) * 2;
                     }
                 } else {
                     this.x += this.vx;
                     this.y += this.vy;
-                    
-                    // Smooth wraparound - drones exit one side and enter the other
-                    if (this.x < 0) { 
-                        this.x = canvas.width + (this.x % canvas.width); 
-                    } else if (this.x > canvas.width) { 
-                        this.x = this.x % canvas.width; 
-                    }
-                    
-                    if (this.y < 0) { 
-                        this.y = canvas.height + (this.y % canvas.height); 
-                    } else if (this.y > canvas.height) { 
-                        this.y = this.y % canvas.height; 
-                    }
+                    if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                    if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
                 }
             }
 
             draw() {
-                const color = this.jammed ? '#ffff00' : this.color;
+                const color = this.jammed ? '#ffff00' : (this.type === 'Hostile' ? '#ff0000' : '#00ff00');
                 ctx.fillStyle = color;
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, 5, 0, Math.PI * 2);
                 ctx.fill();
-
                 if (this.hardened) {
                     ctx.strokeStyle = '#ff00ff';
                     ctx.lineWidth = 2;
@@ -313,14 +404,11 @@
             }
         }
 
-        // MAIN LOOP
+        // ==================== MAIN LOOP ====================
         function animate() {
-            updateSwarmCohesion();
-            
             ctx.fillStyle = '#0a0e27';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Grid
+            
             ctx.strokeStyle = '#003300';
             ctx.lineWidth = 1;
             for (let i = 0; i < canvas.width; i += 50) {
@@ -336,13 +424,11 @@
                 ctx.stroke();
             }
 
-            // Draw drones
             state.drones.forEach(drone => {
                 drone.update();
                 drone.draw();
             });
 
-            // Crosshair
             ctx.strokeStyle = '#00ff00';
             ctx.lineWidth = 2;
             ctx.beginPath();
@@ -353,23 +439,21 @@
             ctx.stroke();
 
             updateUI();
+            updateSwarmCohesion();
             requestAnimationFrame(animate);
         }
 
-        // UI UPDATES
+        // ==================== UI UPDATES ====================
         function updateUI() {
             const hostile = state.drones.filter(d => d.type === 'Hostile').length;
             const jammedCount = state.drones.filter(d => d.jammed).length;
-            
+
             document.getElementById('detected').textContent = state.drones.length;
             document.getElementById('threats').textContent = hostile;
-            document.getElementById('jammed').textContent = jammedCount;
-            document.getElementById('swarmId').textContent = 'SWARM-2026-' + String(state.droneCounter).padStart(3, '0') + '-' + state.formation;
+            document.getElementById('mitigated').textContent = jammedCount;
+            document.getElementById('swarmId').textContent = `SWARM-2026-${String(state.droneCounter).padStart(3, '0')}-${state.formation}`;
             document.getElementById('formation').textContent = state.formation;
-            document.getElementById('rfSig').textContent = 'RF: 2.4G, 5.8G, 10.5G - ' + state.drones.filter(d => d.hardened).length + ' hardened';
-
-            const effectiveness = calculateEffectiveness();
-            document.getElementById('effectiveness').textContent = effectiveness;
+            document.getElementById('rfSig').textContent = `RF: 2.4G + 5.8G + 10.5G (${state.drones.filter(d => d.hardened).length} hardened)`;
 
             updatePriority();
             updateHeatmap();
@@ -377,6 +461,7 @@
             updateAIPrediction();
             updatePrecision();
             updateTriangulation();
+            updatePerformanceMetrics();
         }
 
         function calculateEffectiveness() {
@@ -395,26 +480,15 @@
                 const threat = Math.floor(drone.threat);
                 const color = threat > 70 ? '#ff0000' : threat > 40 ? '#ffaa00' : '#00ff00';
                 const bar = document.createElement('div');
-                bar.style.cssText = `margin: 2px 0; background: linear-gradient(90deg, ${color}, ${threat}%, #1a1e37); height: 12px; border: 1px solid ${color};`;
+                bar.style.cssText = `margin: 2px 0; background: linear-gradient(90deg, ${color} ${threat}%, #1a1e37); height: 12px; border: 1px solid ${color};`;
                 container.appendChild(bar);
             });
         }
 
         let heatmapData = [];
         function initHeatmap() {
-            for (let i = 0; i < 25; i++) {
-                heatmapData.push(Math.floor(Math.random() * 100));
-            }
+            for (let i = 0; i < 16; i++) heatmapData.push(Math.floor(Math.random() * 100));
             renderHeatmap();
-        }
-
-        function updateHeatmap() {
-            if (Math.random() > 0.95) {
-                for (let i = 0; i < heatmapData.length; i++) {
-                    heatmapData[i] = Math.max(0, Math.min(100, heatmapData[i] - 2 + Math.random() * 4));
-                }
-                renderHeatmap();
-            }
         }
 
         function renderHeatmap() {
@@ -430,20 +504,32 @@
             });
         }
 
+        function updateHeatmap() {
+            if (Math.random() > 0.95) {
+                for (let i = 0; i < heatmapData.length; i++) {
+                    heatmapData[i] = Math.max(0, Math.min(100, heatmapData[i] - 2 + Math.random() * 4));
+                }
+                renderHeatmap();
+            }
+        }
+
         function updateRF() {
             const container = document.getElementById('rfSignatures');
             const bands = {};
             state.drones.forEach(d => {
                 bands[d.rfBand] = (bands[d.rfBand] || 0) + 1;
             });
-            container.innerHTML = Object.entries(bands).map(([band, count]) => `<div>${band}: ${count} drones</div>`).join('');
+            container.innerHTML = Object.entries(bands).map(([band, count]) => `<div>🔹 ${band}: ${count} drones</div>`).join('');
         }
 
-        // CONTROLS
+        function updateEnvironment() {
+            state.weather = document.getElementById('weather').value;
+            state.terrain = document.getElementById('terrain').value;
+        }
+
         function addDrone(type) {
             const drone = new Drone(type);
             state.drones.push(drone);
-            state.missionLog.push({ time: Date.now() - state.missionStart, event: `${type} drone spawned`, droneId: drone.id });
         }
 
         function setFormation(form) {
@@ -454,251 +540,102 @@
             });
         }
 
-        function updateEnvironment() {
-            state.weather = document.getElementById('weather').value;
-            state.terrain = document.getElementById('terrain').value;
-            state.missionLog.push({ time: Date.now() - state.missionStart, event: `Environment: ${state.weather}, ${state.terrain}` });
-        }
-
-        let globalJamOn = false, selectiveJamOn = false;
-
-        function globalJam() {
-            globalJamOn = true;
-            selectiveJamOn = false;
-            state.jamActive = true;
-            state.drones.forEach(d => {
-                if (d.type === 'Hostile' && !d.hardened && Math.random() > 0.25) {
-                    d.jammed = true;
-                }
-            });
-            const jammedCount = state.drones.filter(d => d.jammed && d.type === 'Hostile').length;
-            state.missionLog.push({ time: Date.now() - state.missionStart, event: `Global JAM activated`, jammed: jammedCount });
-        }
-
-        function selectiveJam() {
-            selectiveJamOn = true;
-            globalJamOn = false;
-            state.selectiveActive = true;
-            const hostile = state.drones.filter(d => d.type === 'Hostile' && !d.jammed);
-            hostile.slice(0, 2).forEach(d => {
-                d.jammed = true;
-            });
-            state.missionLog.push({ time: Date.now() - state.missionStart, event: `Selective JAM deployed`, targetCount: Math.min(2, hostile.length) });
-        }
-
         function resetSimulation() {
             state.drones = [];
-            state.jammed.clear();
             state.jamActive = false;
             state.selectiveActive = false;
-            globalJamOn = false;
-            selectiveJamOn = false;
-            state.missionStart = Date.now();
-            state.missionLog = [];
-            document.getElementById('spoofBtn').textContent = '🟣 SPOOF LINK';
-            document.getElementById('spoofBtn').style.background = '#ff00ff';
-            document.getElementById('spoofStatus').textContent = '';
-            updateUI();
+            state.droneCounter = 0;
+            state.score = 0;
+            document.getElementById('emulationBtn').textContent = '🟣 PROTOCOL EMULATION (SIM)';
+            document.getElementById('emulationStatus').textContent = '';
         }
 
         function spawnSwarm() {
-            const formations = {
-                'DIAMOND': [
-                    { x: 0, y: 0 },      // Center
-                    { x: 60, y: 0 },     // Right
-                    { x: -60, y: 0 },    // Left
-                    { x: 0, y: 60 },     // Bottom
-                    { x: 0, y: -60 }     // Top
-                ],
-                'LINE': [
-                    { x: -100, y: 0 },
-                    { x: -50, y: 0 },
-                    { x: 0, y: 0 },
-                    { x: 50, y: 0 },
-                    { x: 100, y: 0 }
-                ],
-                'WEDGE': [
-                    { x: 0, y: 0 },      // Point
-                    { x: 50, y: -40 },   // Upper right
-                    { x: 50, y: 40 },    // Lower right
-                    { x: 100, y: -80 },  // Far upper
-                    { x: 100, y: 80 }    // Far lower
-                ],
-                'SCATTER': [
-                    { x: Math.random() * 200 - 100, y: Math.random() * 200 - 100 },
-                    { x: Math.random() * 200 - 100, y: Math.random() * 200 - 100 },
-                    { x: Math.random() * 200 - 100, y: Math.random() * 200 - 100 },
-                    { x: Math.random() * 200 - 100, y: Math.random() * 200 - 100 },
-                    { x: Math.random() * 200 - 100, y: Math.random() * 200 - 100 }
-                ]
-            };
-
-            const currentFormation = formations[state.formation] || formations['DIAMOND'];
-            
             for (let i = 0; i < 5; i++) {
-                const drone = new Drone('Hostile', currentFormation[i]);
+                const drone = new Drone('Hostile');
                 state.drones.push(drone);
-                state.missionLog.push({ time: Date.now() - state.missionStart, event: `Swarm drone ${i + 1} spawned in ${state.formation}`, droneId: drone.id });
             }
         }
 
-        // DISRUPTION
-        const disruption = {
-            police: false,
-            fire: false,
-            military: false,
-            cell: false,
-            lte: false,
-            triangulation: false
-        };
-
-        function toggleDisruption(target) {
-            disruption[target] = !disruption[target];
-            const btn = document.getElementById(target + 'Btn');
-            btn.classList.toggle('active');
-            const targets = Object.entries(disruption).filter(([k, v]) => v).map(([k]) => k);
-            if (targets.length > 0) {
-                state.missionLog.push({ time: Date.now() - state.missionStart, event: `Disruption targets: ${targets.join(', ')}` });
-            }
+        function globalMitigation() {
+            state.jamActive = true;
+            state.drones.forEach(d => {
+                if (d.type === 'Hostile' && (!d.hardened || Math.random() > 0.25)) {
+                    d.jammed = true;
+                }
+            });
         }
 
-        // AI PREDICTION
-        let aiCache = { confidence: 0, prediction: 'No drones detected', lastUpdate: 0 };
+        function selectiveMitigation() {
+            state.selectiveActive = true;
+            const hostile = state.drones.filter(d => d.type === 'Hostile' && !d.jammed);
+            hostile.slice(0, 2).forEach(d => d.jammed = true);
+        }
+
+        function activateProtocolEmulation() {
+            const hostiles = state.drones.filter(d => d.type === 'Hostile');
+            if (hostiles.length === 0) return;
+            hostiles.forEach(d => {
+                d.targetX = canvas.width / 2 + (Math.random() - 0.5) * 100;
+                d.targetY = canvas.height / 2 + (Math.random() - 0.5) * 100;
+                d.redirected = true;
+            });
+            document.getElementById('emulationBtn').textContent = '🟢 EMULATION ACTIVE (SIM)';
+            document.getElementById('emulationBtn').style.background = '#00ff00';
+            document.getElementById('emulationStatus').textContent = `${hostiles.length} tracks redirected (sim)`;
+        }
 
         function updateAIPrediction() {
-            const now = Date.now();
-            if (now - aiCache.lastUpdate < 2000) {
-                document.getElementById('aiConfidence').textContent = aiCache.confidence;
-                document.getElementById('aiPrediction').textContent = aiCache.prediction;
+            const hostiles = state.drones.filter(d => d.type === 'Hostile' && !d.jammed);
+            document.getElementById('approaching').textContent = hostiles.length;
+            if (hostiles.length === 0) {
+                document.getElementById('avgSpeed').textContent = '0';
+                document.getElementById('eta').textContent = 'N/A';
                 return;
             }
-
-            if (state.drones.length === 0) {
-                aiCache.confidence = 0;
-                aiCache.prediction = 'No drones detected';
-            } else {
-                aiCache.confidence = Math.floor(Math.random() * 40 + 60);
-                const predictions = ['Formation Change', 'Speed Increase', 'Direction Shift', 'Scattered', 'Holding Position'];
-                aiCache.prediction = predictions[Math.floor(Math.random() * predictions.length)];
-            }
-            aiCache.lastUpdate = now;
-
-            document.getElementById('aiConfidence').textContent = aiCache.confidence;
-            document.getElementById('aiPrediction').textContent = aiCache.prediction;
+            let totalSpeed = 0;
+            let nearestEta = Infinity;
+            const centerX = canvas.width / 2, centerY = canvas.height / 2;
+            hostiles.forEach(d => {
+                const speed = Math.sqrt(d.vx * d.vx + d.vy * d.vy);
+                totalSpeed += speed;
+                const dx = d.x - centerX, dy = d.y - centerY;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                const eta = speed > 0 ? (dist / speed) / 30 : Infinity;
+                if (eta < nearestEta) nearestEta = eta;
+            });
+            document.getElementById('avgSpeed').textContent = (totalSpeed / hostiles.length).toFixed(2);
+            document.getElementById('eta').textContent = nearestEta === Infinity ? '∞' : nearestEta.toFixed(1);
         }
 
-        // PRECISION
         function updatePrecision() {
-            const jammedCount = state.drones.filter(d => d.jammed).length;
-            const totalCount = state.drones.length;
-            const accuracy = totalCount > 0 ? Math.floor((jammedCount / totalCount) * 100) : 0;
-            document.getElementById('precision').textContent = accuracy + '%';
+            const mitigated = state.drones.filter(d => d.jammed).length;
+            const total = state.drones.length;
+            const acc = total > 0 ? Math.floor((mitigated / total) * 100) : 0;
+            document.getElementById('precision').textContent = acc + '%';
         }
 
-        // TRIANGULATION
-        let triangCache = { signal: '-85dBm', accuracy: '15m', lat: '38.8951', lon: '-77.0369', lastUpdate: 0 };
-
+        let triangCache = { signal: '-85dBm', accuracy: '±15m', lat: '38.8951', lon: '-77.0369', lastUpdate: 0 };
         function updateTriangulation() {
             const now = Date.now();
             if (now - triangCache.lastUpdate < 3000) {
-                document.getElementById('signalStrength').textContent = triangCache.signal;
+                document.getElementById('signal').textContent = triangCache.signal;
                 document.getElementById('accuracy').textContent = triangCache.accuracy;
-                document.getElementById('latitude').textContent = triangCache.lat;
-                document.getElementById('longitude').textContent = triangCache.lon;
+                document.getElementById('lat').textContent = triangCache.lat + '°N';
+                document.getElementById('lon').textContent = triangCache.lon + '°W';
                 return;
             }
-
-            const signalStrengths = ['-75dBm', '-80dBm', '-85dBm', '-90dBm', '-95dBm'];
-            const accuracies = ['5m', '8m', '12m', '15m', '20m'];
-            const idx = Math.floor(Math.random() * signalStrengths.length);
-
-            triangCache.signal = signalStrengths[idx];
-            triangCache.accuracy = accuracies[idx];
+            triangCache.signal = ['-75dBm', '-80dBm', '-85dBm', '-90dBm'][Math.floor(Math.random() * 4)];
+            triangCache.accuracy = ['±5m', '±8m', '±12m', '±15m'][Math.floor(Math.random() * 4)];
             triangCache.lat = (38.8951 + (Math.random() - 0.5) * 0.01).toFixed(4);
             triangCache.lon = (-77.0369 + (Math.random() - 0.5) * 0.01).toFixed(4);
             triangCache.lastUpdate = now;
-
-            document.getElementById('signalStrength').textContent = triangCache.signal;
+            document.getElementById('signal').textContent = triangCache.signal;
             document.getElementById('accuracy').textContent = triangCache.accuracy;
-            document.getElementById('latitude').textContent = triangCache.lat;
-            document.getElementById('longitude').textContent = triangCache.lon;
+            document.getElementById('lat').textContent = triangCache.lat + '°N';
+            document.getElementById('lon').textContent = triangCache.lon + '°W';
         }
 
-        // EXPORT AAB - FULL REPORT
-        function exportAAB() {
-            const jammedCount = state.drones.filter(d => d.jammed).length;
-            const totalDrones = state.drones.length;
-            const hostile = state.drones.filter(d => d.type === 'Hostile').length;
-            const effectiveness = calculateEffectiveness();
-            const successRate = totalDrones > 0 ? Math.floor((jammedCount / totalDrones) * 100) : 0;
-            const roi = jammedCount > 0 ? Math.floor((250000000 / jammedCount) * successRate / 100) : 0;
-            const duration = Math.floor((Date.now() - state.missionStart) / 1000);
-            const minutes = Math.floor(duration / 60);
-            const seconds = duration % 60;
-
-            const html = `<!DOCTYPE html><html><head><title>After-Action Brief - ChaosTech NSD</title><style>body{font-family:'Segoe UI',Arial;background:#f5f5f5;margin:0;padding:20px}*{box-sizing:border-box}.aab{background:white;padding:40px;border:3px solid #000;max-width:1000px;margin:0 auto;box-shadow:0 2px 8px rgba(0,0,0,0.1)}.header{text-align:center;border-bottom:4px solid #0000cc;padding-bottom:20px;margin-bottom:30px}.header h1{margin:0;font-size:32px;color:#000;letter-spacing:2px}.header .subtitle{color:#666;font-size:12px;margin-top:5px;text-transform:uppercase}.section{margin:30px 0;padding:20px;background:#f9f9f9;border-left:5px solid #0000cc}.section h2{margin:0 0 15px 0;font-size:16px;color:#0000cc;text-transform:uppercase;letter-spacing:1px}.metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-top:15px}.metric-box{background:white;padding:15px;border:1px solid #ddd;border-radius:4px;text-align:center}.metric-label{font-size:11px;color:#666;text-transform:uppercase;font-weight:bold}.metric-value{font-size:28px;font-weight:bold;color:#0000cc;margin-top:8px}.metric-value.success{color:#00aa00}.metric-value.warning{color:#ff6600}.metric-value.critical{color:#cc0000}table{width:100%;border-collapse:collapse;margin:15px 0;background:white}th{background:#e8e8e8;padding:10px;text-align:left;font-weight:bold;font-size:12px;border-bottom:2px solid #0000cc}td{padding:10px;border-bottom:1px solid #ddd;font-size:12px}tr:hover{background:#f5f5f5}.footer{text-align:center;margin-top:40px;padding-top:20px;border-top:2px solid #ddd;font-size:9px;color:#999}.footer strong{display:block;margin-bottom:5px;color:#000}</style></head><body><div class="aab"><div class="header"><h1>AFTER-ACTION BRIEF</h1><div class="subtitle">ChaosTech Defense LLC | Neuro Swarm Disruptor v14</div></div><div class="section"><h2>✓ Mission Summary</h2><div class="metric-grid"><div class="metric-box"><div class="metric-label">Mission Duration</div><div class="metric-value">${minutes}m ${seconds}s</div></div><div class="metric-box"><div class="metric-label">Total Engagement</div><div class="metric-value">${new Date().toLocaleString()}</div></div><div class="metric-box"><div class="metric-label">Status</div><div class="metric-value success">COMPLETE</div></div></div></div><div class="section"><h2>⚔️ Engagement Metrics</h2><div class="metric-grid"><div class="metric-box"><div class="metric-label">Drones Detected</div><div class="metric-value">${totalDrones}</div></div><div class="metric-box"><div class="metric-label">Hostile Threats</div><div class="metric-value critical">${hostile}</div></div><div class="metric-box"><div class="metric-label">Successfully Jammed</div><div class="metric-value success">${jammedCount}</div></div><div class="metric-box"><div class="metric-label">Success Rate</div><div class="metric-value success">${successRate}%</div></div><div class="metric-box"><div class="metric-label">System Effectiveness</div><div class="metric-value">${effectiveness}%</div></div><div class="metric-box"><div class="metric-label">Formation</div><div class="metric-value">${state.formation}</div></div></div></div><div class="section"><h2>💰 ROI Analysis</h2><div class="metric-grid"><div class="metric-box"><div class="metric-label">Protected Infrastructure</div><div class="metric-value">$250M</div></div><div class="metric-box"><div class="metric-label">Cost Avoidance (${successRate}%)</div><div class="metric-value success">$${(250000000 * successRate / 100).toLocaleString()}</div></div><div class="metric-box"><div class="metric-label">Cost Per Drone</div><div class="metric-value">$167k</div></div></div></div><div class="section"><h2>🎯 Disruption Targets Engaged</h2><table><tr><th>Target Type</th><th>Status</th></tr><tr><td>Police/Law Enforcement</td><td>${disruption.police ? '✓ ACTIVE' : 'STANDBY'}</td></tr><tr><td>Fire/EMS Services</td><td>${disruption.fire ? '✓ ACTIVE' : 'STANDBY'}</td></tr><tr><td>Military Networks</td><td>${disruption.military ? '✓ ACTIVE' : 'STANDBY'}</td></tr><tr><td>Cellular Networks</td><td>${disruption.cell ? '✓ ACTIVE' : 'STANDBY'}</td></tr><tr><td>LTE/WiFi Systems</td><td>${disruption.lte ? '✓ ACTIVE' : 'STANDBY'}</td></tr><tr><td>Triangulation Blocking</td><td>${disruption.triangulation ? '✓ ACTIVE' : 'STANDBY'}</td></tr></table></div><div class="footer"><strong>DISTRIBUTION: OFFICIAL USE ONLY</strong>Generated ${new Date().toISOString()}<br>ChaosTech Defense LLC | Authorized Personnel Only</div></div></body></html>`;
-
-            const blob = new Blob([html], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'NSD-AAB-' + Date.now() + '.html';
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        // INFRASTRUCTURE SCANNER - Full Vulnerability Interface
-        const vulnerabilities = {
-            airport: [
-                { name: 'Runway Lighting Control', severity: 'CRITICAL', vector: 'WiFi 2.4G', impact: 'Complete blackout' },
-                { name: 'Air Traffic Control Radar', severity: 'CRITICAL', vector: '5.8G, 10.5G', impact: 'Spoofed targets' },
-                { name: 'Perimeter Fence Sensors', severity: 'HIGH', vector: 'LoRaWAN', impact: 'Blind zones created' },
-                { name: 'Baggage Handling System', severity: 'MEDIUM', vector: 'LTE Band 7', impact: 'Operations halted' }
-            ],
-            powerplant: [
-                { name: 'SCADA Network Gateway', severity: 'CRITICAL', vector: '4G/LTE', impact: 'Grid control compromised' },
-                { name: 'Turbine RPM Sensors', severity: 'CRITICAL', vector: 'ISM 915MHz', impact: 'Catastrophic failure risk' },
-                { name: 'Substation Breakers', severity: 'CRITICAL', vector: 'Cellular uplink', impact: 'Cascading outage' },
-                { name: 'Employee WiFi', severity: 'HIGH', vector: '5GHz', impact: 'Operational chaos' }
-            ],
-            hospital: [
-                { name: 'Patient Monitoring Systems', severity: 'CRITICAL', vector: 'WiFi 5GHz', impact: 'Patient safety at risk' },
-                { name: 'Operating Room Equipment', severity: 'CRITICAL', vector: 'Bluetooth 5.0', impact: 'Surgery interrupted' },
-                { name: 'Drug Infusion Pumps', severity: 'CRITICAL', vector: 'ISM bands', impact: 'Medication flow altered' },
-                { name: 'Emergency Call System', severity: 'CRITICAL', vector: 'Cellular', impact: 'Help requests blocked' }
-            ],
-            datacenter: [
-                { name: 'Server Management Network', severity: 'CRITICAL', vector: '5.8G, 10.5G', impact: 'Remote access blocked' },
-                { name: 'Cooling System Controllers', severity: 'CRITICAL', vector: 'WiFi 6E', impact: 'Thermal shutdown' },
-                { name: 'Power Distribution Unit', severity: 'CRITICAL', vector: 'LTE uplink', impact: 'Complete power loss' },
-                { name: 'Firewall Command Control', severity: 'CRITICAL', vector: '4G/5G', impact: 'Security bypass' }
-            ]
-        };
-
-        function scanInfrastructure(target) {
-            const results = vulnerabilities[target] || [];
-            const resultsDiv = document.getElementById('scanResults');
-            resultsDiv.innerHTML = `<div style="color: #ffff00; font-weight: bold; margin-bottom: 8px;">SCANNING ${target.toUpperCase()}...</div>`;
-            
-            setTimeout(() => {
-                let html = `<div style="color: #ff0000; font-weight: bold; margin-bottom: 8px;">${results.length} VULNERABILITIES DETECTED</div>`;
-                
-                results.forEach((vuln, idx) => {
-                    const severityColor = vuln.severity === 'CRITICAL' ? '#ff0000' : vuln.severity === 'HIGH' ? '#ffaa00' : '#ffff00';
-                    html += `<div style="margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #003300;">
-                        <div style="color: ${severityColor}; font-weight: bold; font-size: 10px;">${vuln.severity}</div>
-                        <div style="color: #00ff00; margin-top: 2px;">${vuln.name}</div>
-                        <div style="color: #ffff00; font-size: 8px; margin-top: 2px;">Vector: ${vuln.vector}</div>
-                        <div style="color: #ff6600; font-size: 8px;">Impact: ${vuln.impact}</div>
-                    </div>`;
-                });
-                
-                resultsDiv.innerHTML = html;
-                resultsDiv.scrollTop = 0;
-            }, 800);
-        }
-
-        // SWARM COHESION
         function updateSwarmCohesion() {
             const hostiles = state.drones.filter(d => d.type === 'Hostile');
             if (hostiles.length < 2) {
@@ -706,7 +643,6 @@
                 document.getElementById('cohesionFill').style.width = '0%';
                 return;
             }
-
             let totalDist = 0;
             for (let i = 0; i < hostiles.length; i++) {
                 for (let j = i + 1; j < hostiles.length; j++) {
@@ -717,40 +653,70 @@
             }
             const avgDist = totalDist / (hostiles.length * (hostiles.length - 1) / 2);
             let cohesion = Math.max(0, 1 - avgDist / 400);
-
-            if (globalJamOn || selectiveJamOn) {
-                cohesion *= 0.3;
-            }
-
+            if (state.jamActive || state.selectiveActive) cohesion *= 0.3;
             const cohesionPercent = Math.round(cohesion * 100);
             document.getElementById('cohesionFill').style.width = cohesionPercent + '%';
-            document.getElementById('cohesionVal').textContent = `Cohesion: ${cohesionPercent}% (${cohesion > 0.6 ? 'TIGHT' : cohesion > 0.3 ? 'FORMING' : 'FRAGMENTED'})`;
-
+            const state_txt = cohesion > 0.6 ? 'TIGHT' : cohesion > 0.3 ? 'FORMING' : 'FRAGMENTED';
+            document.getElementById('cohesionVal').textContent = `Cohesion: ${cohesionPercent}% (${state_txt})`;
             const freqs = ['2.4 GHz', '5.8 GHz', '10.5 GHz', '900 MHz'];
-            const freqIdx = Math.floor(freqs.length * (1 - cohesion));
-            document.getElementById('hopPrediction').textContent = `Next: ${freqs[Math.min(freqIdx, freqs.length-1)]}`;
+            const idx = Math.floor(freqs.length * (1 - cohesion));
+            document.getElementById('hopPrediction').textContent = `Next: ${freqs[Math.min(idx, freqs.length - 1)]}`;
         }
 
-        function injectFalseAggregation() {
+        function updatePerformanceMetrics() {
             const hostiles = state.drones.filter(d => d.type === 'Hostile');
-            if (hostiles.length === 0) return;
-
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-
-            hostiles.forEach(drone => {
-                drone.targetX = centerX + (Math.random() - 0.5) * 100;
-                drone.targetY = centerY + (Math.random() - 0.5) * 100;
-                drone.isRedirected = true;
-                drone.color = '#ff00ff';
-            });
-
-            document.getElementById('spoofBtn').textContent = '🟢 TAKEOVER ACTIVE';
-            document.getElementById('spoofBtn').style.background = '#00ff00';
-            document.getElementById('spoofStatus').textContent = `${hostiles.length} drones redirected`;
+            const range = Math.round(Math.min(canvas.width, canvas.height) / 2);
+            const mitigated = state.drones.filter(d => d.jammed).length;
+            
+            document.getElementById('detectionSpeed').textContent = (500 + Math.random() * 1500).toFixed(0) + ' ms';
+            document.getElementById('detectionRange').textContent = range + ' m';
+            document.getElementById('detectionAccuracy').textContent = (hostiles.length > 0 ? 95 + Math.floor(Math.random() * 4) : 100) + '%';
+            document.getElementById('trackingRange').textContent = range + ' m';
+            document.getElementById('trackingAccuracy').textContent = (hostiles.length > 0 ? 93 + Math.floor(Math.random() * 4) : 100) + '%';
+            document.getElementById('mitigationSuccess').textContent = (hostiles.length > 0 ? Math.floor((mitigated / hostiles.length) * 100) : 0) + '%';
+            document.getElementById('coverage').textContent = (canvas.width * canvas.height) + ' m²';
+            document.getElementById('reliability').textContent = (hostiles.length > 0 ? 95 + Math.floor(Math.random() * 4) : 100) + '%';
+            document.getElementById('score').textContent = state.score;
         }
 
-        // INITIALIZE
+        function toggleAsset(asset) {
+            state.protectedAssets[asset] = !state.protectedAssets[asset];
+        }
+
+        function toggleDynamicMode() {
+            state.dynamicMode = !state.dynamicMode;
+            const btn = document.getElementById('dynamicBtn');
+            if (state.dynamicMode) {
+                state.dynamicInterval = setInterval(() => {
+                    const rand = Math.floor(Math.random() * 3);
+                    if (rand === 0) addDrone('Hostile');
+                    else if (rand === 1) spawnSwarm();
+                    state.score -= 5;
+                }, 7000);
+                btn.textContent = 'DYNAMIC MODE ON';
+            } else {
+                clearInterval(state.dynamicInterval);
+                btn.textContent = 'DYNAMIC MODE (SIM)';
+            }
+        }
+
+        function exportAAR() {
+            const report = {
+                timestamp: new Date().toISOString(),
+                totalDetected: state.drones.length,
+                hostileThreats: state.drones.filter(d => d.type === 'Hostile').length,
+                mitigated: state.drones.filter(d => d.jammed).length,
+                formation: state.formation,
+                weather: state.weather,
+                terrain: state.terrain,
+                protectedAssets: Object.entries(state.protectedAssets).filter(([k,v]) => v).map(([k]) => k),
+                score: state.score
+            };
+            console.log('=== AFTER-ACTION REPORT (SIMULATED) ===');
+            console.log(JSON.stringify(report, null, 2));
+            alert('AAR logged to console. Open Developer Tools (F12) to view.');
+        }
+
         window.addEventListener('load', () => {
             initCanvas();
             initHeatmap();
