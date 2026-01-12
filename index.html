@@ -1,1147 +1,475 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChaosTech NSD v17 - Advanced Counter-UAS with Bio-Acoustic & Kinetic</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { width: 100%; height: 100%; font-family: 'Courier New', monospace; overflow: hidden; background: #0a0e27; color: #00ff00; }
-        
-        #demoModeBanner {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: #ff0000;
-            color: white;
-            padding: 12px;
-            text-align: center;
-            font-weight: bold;
-            z-index: 10001;
-            font-size: 13px;
-            letter-spacing: 1px;
-        }
-        
-        #complianceBanner {
-            position: fixed;
-            top: 40px;
-            left: 0;
-            right: 0;
-            background: rgba(0,0,0,0.9);
-            border-bottom: 2px solid #ffff00;
-            color: #ffff00;
-            padding: 8px 12px;
-            z-index: 10000;
-            font-size: 10px;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-        
-        body { padding-top: 74px; }
-        
-        .container { display: flex; width: 100%; height: calc(100vh - 74px); gap: 8px; padding: 8px; }
-        .radar-wrapper { display: flex; flex-direction: column; gap: 8px; flex: 1.2; }
-        .radar { flex: 1; background: #0a0e27; border: 2px solid #00ff00; position: relative; overflow: hidden; border-radius: 4px; }
-        .radar-bottom-row { display: flex; gap: 8px; }
-        .radar-sub { flex: 1; background: #0a0e27; border: 2px solid #00ff00; padding: 10px; font-size: 9px; max-height: 160px; overflow-y: auto; border-radius: 4px; }
-        .panels { flex: 1; background: #0a0e27; border-left: 2px solid #00ff00; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 0 8px; }
-        canvas { display: block; width: 100%; height: 100%; }
-        
-        .panel {
-            border: 2px solid #00ff00;
-            padding: 12px;
-            background: #0a0e27;
-            color: #00ff00;
-            font-size: 11px;
-            flex-shrink: 0;
-            border-radius: 4px;
-        }
-        
-        .panel-title { font-weight: bold; color: #ffff00; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; font-size: 10px; }
-        .metric { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #003300; font-size: 10px; }
-        .metric-label { color: #00ff00; }
-        .metric-value { color: #ffff00; font-weight: bold; }
-        
-        button {
-            background: #0a0e27;
-            color: #00ff00;
-            border: 1px solid #00ff00;
-            padding: 6px 10px;
-            margin: 4px;
-            cursor: pointer;
-            font-size: 9px;
-            font-weight: bold;
-            transition: all 0.2s;
-            font-family: 'Courier New', monospace;
-        }
-        
-        button:hover { background: #00ff00; color: #0a0e27; }
-        button.active { background: #ffff00; color: #0a0e27; }
-        
-        select {
-            background: #0a0e27;
-            color: #00ff00;
-            border: 1px solid #00ff00;
-            padding: 6px;
-            margin: 4px 0;
-            width: 100%;
-            font-size: 9px;
-            font-family: 'Courier New', monospace;
-            cursor: pointer;
-        }
-        
-        .swarm-cohesion-panel {
-            position: absolute;
-            top: 20px;
-            right: 10px;
-            width: 240px;
-            background: rgba(0,0,0,0.9);
-            border: 2px solid #ff00ff;
-            padding: 12px;
-            font-size: 10px;
-            z-index: 100;
-            border-radius: 6px;
-        }
-        
-        .cohesion-bar {
-            width: 100%;
-            height: 12px;
-            background: #333;
-            border: 1px solid #ff00ff;
-            margin: 6px 0;
-            border-radius: 3px;
-            overflow: hidden;
-        }
-        
-        .cohesion-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000);
-            transition: width 0.3s ease;
-        }
+  <meta charset="UTF-8" />
+  <!-- Allow zoom for accessibility; keep viewport-fit for safe areas -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>NSD v19 Mobile Pitch Deck (14 Slides)</title>
+  <style>
+    :root{
+      --safe-b: env(safe-area-inset-bottom, 0px);
+      --safe-t: env(safe-area-inset-top, 0px);
+      --nav-h: 72px;
 
-        .rf-spectrum-panel {
-            position: absolute;
-            top: 20px;
-            left: 10px;
-            width: 200px;
-            background: rgba(0,0,0,0.9);
-            border: 2px solid #00ffff;
-            padding: 10px;
-            font-size: 9px;
-            z-index: 100;
-            border-radius: 6px;
-        }
+      --bg0:#1a1a1a;
+      --bg1:#1a1a2e;
+      --bg2:#16213e;
+      --panel:#0f3460;
+      --green:#00ff88;
+      --cyan:#00d4ff;
+      --orange:#ff6b35;
+      --text:#cbd5e1;
+      --muted:#a0aec0;
+    }
 
-        .freq-bar {
-            display: flex;
-            gap: 3px;
-            margin: 6px 0;
-            align-items: center;
-        }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-        .freq-label {
-            color: #00ffff;
-            min-width: 45px;
-            font-size: 8px;
-        }
+    html, body { height: 100%; }
 
-        .freq-indicator {
-            flex: 1;
-            height: 8px;
-            background: #1a1a2e;
-            border: 1px solid #00ffff;
-            border-radius: 2px;
-            overflow: hidden;
-            position: relative;
-        }
+    body{
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: var(--bg0);
+      color: #fff;
 
-        .freq-active {
-            height: 100%;
-            background: linear-gradient(90deg, #00ff00, #00ffff);
-            animation: pulse 0.6s infinite;
-        }
+      /* Important: avoid position:fixed on body (iOS scroll weirdness) */
+      overflow: hidden;
+    }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
+    /* Use svh to avoid iOS address bar jump; fallback is 100vh */
+    .slide-container{
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 100%);
+      padding: calc(10px + var(--safe-t)) 10px calc(10px + var(--safe-b));
+      position: relative;
+    }
 
-        .compliance-footer {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            font-size: 8px;
-            color: #999;
-            background: rgba(0,0,0,0.9);
-            padding: 8px 12px;
-            border-radius: 4px;
-            max-width: 200px;
-            border: 1px solid #444;
-            z-index: 999;
-        }
-        
-        .threat-high { color: #ff0000; }
-        .threat-med { color: #ffaa00; }
-        .threat-low { color: #00ff00; }
+    .slide{
+      width: 100%;
+      height: calc(100svh - var(--nav-h) - var(--safe-b) - 20px);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 20px;
+      display: none;
+      flex-direction: column;
+      justify-content: flex-start;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      position: relative;
 
-        .module-active { background: #00ff00 !important; color: #0a0e27 !important; }
-        .module-panel {
-            border: 2px solid #ff00ff;
-            background: rgba(255, 0, 255, 0.1);
-        }
-    </style>
+      /* Scroll inside slide */
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+
+      /* Prevent content hiding behind nav bar */
+      padding-bottom: calc(20px + var(--nav-h) + var(--safe-b));
+    }
+
+    .slide.active{ display:flex; }
+
+    .slide::before{
+      content:'';
+      position:absolute;
+      inset:0;
+      background:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="%23ffffff" stroke-width="0.5" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+      pointer-events:none;
+    }
+
+    .slide-content{
+      position:relative;
+      z-index:1;
+      display:flex;
+      flex-direction:column;
+      min-height:100%;
+      justify-content:space-between;
+      gap: 10px;
+    }
+
+    h1{
+      font-size:2rem;
+      margin-bottom:10px;
+      color:var(--green);
+      text-shadow:0 0 10px rgba(0,255,136,0.5);
+      font-weight:700;
+      line-height:1.2;
+    }
+    h2{
+      font-size:1.6rem;
+      margin-bottom:15px;
+      color:var(--cyan);
+      text-shadow:0 0 8px rgba(0,212,255,0.3);
+      font-weight:600;
+      line-height:1.2;
+    }
+    h3{
+      font-size:1rem;
+      color:var(--green);
+      margin-top:10px;
+      margin-bottom:8px;
+      text-transform:uppercase;
+      letter-spacing:0.5px;
+    }
+    .subtitle{ font-size:1rem; color:var(--muted); line-height:1.4; }
+    .tagline{ font-size:0.9rem; color:var(--green); margin-top:10px; font-weight:600; }
+
+    p{
+      font-size:0.85rem;
+      line-height:1.4;
+      color:var(--text);
+      margin:6px 0;
+    }
+
+    .content-box{
+      background:rgba(0,255,136,0.1);
+      border-left:3px solid var(--green);
+      padding:12px 15px;
+      margin:8px 0;
+      border-radius:4px;
+      font-size:0.8rem;
+      line-height:1.4;
+    }
+
+    .grid-2, .two-column{
+      display:flex;
+      flex-direction:column;
+      gap:15px;
+      margin:10px 0;
+    }
+
+    .grid-3{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:12px;
+      margin:10px 0;
+    }
+
+    .metric-card{
+      background:rgba(0,212,255,0.1);
+      border:1px solid var(--cyan);
+      padding:15px;
+      border-radius:6px;
+      text-align:center;
+      font-size:0.8rem;
+    }
+
+    .metric-value{
+      font-size:1.4rem;
+      color:var(--orange);
+      font-weight:700;
+      margin:6px 0;
+    }
+
+    .metric-label{
+      color:var(--muted);
+      font-size:0.7rem;
+      text-transform:uppercase;
+      letter-spacing:0.5px;
+    }
+
+    .bullet-list{ list-style:none; margin:8px 0; }
+    .bullet-list li{
+      margin:6px 0;
+      padding-left:20px;
+      font-size:0.8rem;
+      line-height:1.4;
+      position:relative;
+    }
+    .bullet-list li:before{
+      content:'▸';
+      position:absolute;
+      left:0;
+      color:var(--green);
+      font-size:1rem;
+    }
+
+    .table-simple, .comparison-table{
+      width:100%;
+      border-collapse:collapse;
+      margin:10px 0;
+      font-size:0.7rem;
+      display:block;
+      overflow-x:auto;
+      -webkit-overflow-scrolling:touch;
+      white-space:nowrap;
+    }
+
+    .table-simple th, .comparison-table th{
+      background:rgba(0,255,136,0.2);
+      border:1px solid var(--green);
+      padding:6px;
+      text-align:left;
+      color:var(--green);
+      font-weight:600;
+      font-size:0.65rem;
+    }
+    .table-simple td, .comparison-table td{
+      border:1px solid rgba(0,255,136,0.3);
+      padding:5px;
+      background:rgba(0,0,0,0.2);
+      font-size:0.65rem;
+    }
+
+    .highlight{ color:var(--orange); font-weight:700; }
+
+    .accent-box{
+      background:rgba(255,107,53,0.15);
+      border-left:3px solid var(--orange);
+      padding:12px;
+      margin:10px 0;
+      border-radius:4px;
+      font-size:0.8rem;
+    }
+
+    .risk-box{
+      background:rgba(255,0,0,0.1);
+      border-left:3px solid #ff0000;
+      padding:12px;
+      margin:10px 0;
+      border-radius:4px;
+    }
+
+    .mitigation-box{
+      background:rgba(0,255,136,0.1);
+      border-left:2px solid var(--green);
+      padding:8px 10px;
+      margin:6px 0;
+      border-radius:3px;
+      font-size:0.75rem;
+    }
+
+    /* NAV BAR: safe area + consistent height */
+    .nav-bar{
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: calc(var(--nav-h) + var(--safe-b));
+      padding: 12px 12px calc(12px + var(--safe-b));
+      background: rgba(15,52,96,0.92);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      display:flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    button{
+      background: var(--green);
+      color: var(--panel);
+      border:none;
+      padding: 12px 16px;
+      border-radius: 10px;
+      cursor:pointer;
+      font-weight: 700;
+      font-size: 0.82rem;
+      transition: filter 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      flex: 1;
+      min-height: 44px; /* touch target */
+    }
+    button:active{ filter: brightness(0.95); }
+    button:disabled{ opacity:0.5; cursor:not-allowed; }
+
+    .slide-number{
+      position: fixed;
+      right: 12px;
+      bottom: calc(var(--nav-h) + 10px + var(--safe-b));
+      font-size: 0.8rem;
+      color: var(--muted);
+      z-index: 1001;
+      background: rgba(0,0,0,0.45);
+      padding: 6px 10px;
+      border-radius: 999px;
+    }
+
+    .swipe-hint{
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: calc(var(--nav-h) + 14px + var(--safe-b));
+      font-size: 0.72rem;
+      color: var(--muted);
+      z-index: 1001;
+      animation: pulse 2s infinite;
+      background: rgba(0,0,0,0.25);
+      padding: 6px 10px;
+      border-radius: 999px;
+    }
+
+    @keyframes pulse{ 0%,100%{opacity:.55} 50%{opacity:1} }
+
+    /* Landscape tweaks */
+    @media (max-width: 768px) and (orientation: landscape){
+      .slide{ padding: 15px 18px; padding-bottom: calc(15px + var(--nav-h) + var(--safe-b)); }
+      h1{ font-size: 1.8rem; }
+      h2{ font-size: 1.4rem; }
+      .grid-3{ grid-template-columns: 1fr 1fr; }
+    }
+
+    /* Small phones */
+    @media (max-width: 375px){
+      h1{ font-size: 1.6rem; }
+      h2{ font-size: 1.3rem; }
+      .slide{ padding: 15px; padding-bottom: calc(15px + var(--nav-h) + var(--safe-b)); }
+    }
+
+    /* Hide scrollbars */
+    .slide::-webkit-scrollbar{ display:none; }
+    .slide{ -ms-overflow-style:none; scrollbar-width:none; }
+
+    /* Keep text selectable (better UX), but avoid selection during swipe via JS */
+  </style>
 </head>
 <body>
-    <div id="demoModeBanner">
-        🔴 DEMO MODE - SIMULATION ONLY - NSD v17 WITH RF HOPPING + ACOUSTIC DECOY & KINETIC INTERCEPTOR
+
+  <!-- Slides (UNCHANGED CONTENT) -->
+  <!-- Keep your existing 14 .slide blocks exactly as-is below this line -->
+  <!-- START SLIDES -->
+  <!-- SLIDE 1 -->
+  <div class="slide active">
+    <div class="slide-content">
+      <div>
+        <h1>NEURO SWARM DISRUPTOR v19</h1>
+        <p class="tagline">RF + Acoustic + Kinetic AI Integration</p>
+        <p class="subtitle">Integrated 3-Vector Counter-UAS Platform</p>
+      </div>
+      <div style="margin-top: auto; padding-bottom: 10px;">
+        <p><strong>Daivon Brown</strong> | Founder</p>
+        <p style="margin-top: 5px;"><span class="highlight">$500K Pre-Seed</span> | Building Prototype</p>
+        <p style="margin-top: 5px; color: #00d4ff; font-size: 0.75rem;">DaivonBrown@ChaosTechDefenseLLC.com</p>
+        <p style="font-size: 0.75rem; color: #00d4ff;">(202) 830-6292</p>
+      </div>
     </div>
-    
-    <div id="complianceBanner">
-        SIMULATION ONLY • NO RF TRANSMIT • CONCEPT DEMO | Modules: RF Hopping + Bio-Mimetic Acoustic Decoy + Drone-Mounted Kinetic Interceptor
-    </div>
-    
-    <div class="compliance-footer">
-        <strong>⚠️ NSD v17:</strong> All actions simulated. Authorized use only.
-    </div>
-
-    <div class="container">
-        <div class="radar-wrapper">
-            <div class="radar" id="radarContainer">
-                <canvas id="radarCanvas"></canvas>
-                
-                <div class="rf-spectrum-panel">
-                    <div style="color:#00ffff; font-weight:bold; margin-bottom:6px;">📡 RF SPECTRUM</div>
-                    <div class="freq-bar">
-                        <div class="freq-label">2.4GHz</div>
-                        <div class="freq-indicator"><div id="freq24" class="freq-active" style="width:0%"></div></div>
-                        <span id="freq24val" style="color:#00ffff; font-size:7px; min-width:20px;">0</span>
-                    </div>
-                    <div class="freq-bar">
-                        <div class="freq-label">5.8GHz</div>
-                        <div class="freq-indicator"><div id="freq58" class="freq-active" style="width:0%"></div></div>
-                        <span id="freq58val" style="color:#00ffff; font-size:7px; min-width:20px;">0</span>
-                    </div>
-                    <div class="freq-bar">
-                        <div class="freq-label">10.5GHz</div>
-                        <div class="freq-indicator"><div id="freq105" class="freq-active" style="width:0%"></div></div>
-                        <span id="freq105val" style="color:#00ffff; font-size:7px; min-width:20px;">0</span>
-                    </div>
-                    <div style="color:#ffff00; font-size:8px; margin-top:8px; border-top:1px solid #00ffff; padding-top:6px;">Hop Rate: <span id="hopRate" style="color:#ff6600;">NORMAL</span></div>
-                </div>
-                
-                <div class="swarm-cohesion-panel">
-                    <div style="color:#ff00ff; font-weight:bold; margin-bottom:8px;">🎯 SWARM COHESION</div>
-                    <div class="cohesion-bar"><div class="cohesion-fill" id="cohesionFill"></div></div>
-                    <div id="cohesionVal" style="color:#ffff00; margin:6px 0; font-size:9px;">Cohesion: N/A</div>
-                    <div id="hopPrediction" style="color:#00ffff; margin-top:6px; font-size:9px;">Next Freq: Detecting...</div>
-                    <button id="emulationBtn" onclick="activateProtocolEmulation()" style="width:100%; margin-top:8px; background:#ff00ff; color:#000; border:1px solid #ff00ff;">🟣 PROTOCOL EMULATION (SIM)</button>
-                    <div id="emulationStatus" style="color:#00ff00; font-size:8px; margin-top:6px;"></div>
-                </div>
-            </div>
-
-            <div class="radar-bottom-row">
-                <div class="radar-sub">
-                    <div class="panel-title">📊 PERFORMANCE</div>
-                    <div class="metric"><span>Det. Speed</span><span id="detectionSpeed" class="metric-value">0 ms</span></div>
-                    <div class="metric"><span>Det. Acc</span><span id="detectionAccuracy" class="metric-value">0%</span></div>
-                    <div class="metric"><span>Mit. Success</span><span id="mitigationSuccess" class="metric-value">0%</span></div>
-                    <div class="metric"><span>Reliability</span><span id="reliability" class="metric-value">0%</span></div>
-                    <div class="metric"><span>Score</span><span id="score" class="metric-value">0</span></div>
-                </div>
-
-                <div class="radar-sub">
-                    <div class="panel-title">📍 TRIANGULATION ORIGIN</div>
-                    <div class="metric"><span>Signal</span><span id="signal" class="metric-value">-82 dBm</span></div>
-                    <div class="metric"><span>Accuracy</span><span id="triAccuracy" class="metric-value">±8m</span></div>
-                    <div class="metric"><span>Latitude</span><span id="latitude" class="metric-value">38.8951°N</span></div>
-                    <div class="metric"><span>Longitude</span><span id="longitude" class="metric-value">-77.0369°W</span></div>
-                    <div style="color:#00ff00; font-size:8px; margin-top:6px;">📍 Washington, DC</div>
-                </div>
-
-                <div class="radar-sub">
-                    <div class="panel-title">🎯 PRECISION</div>
-                    <div class="metric"><span>Targeting Acc</span><span id="targetingAcc" class="metric-value">0%</span></div>
-                    <div class="metric"><span>Collision Avoid</span><span id="collisionAvoid" class="metric-value">ACTIVE</span></div>
-                    <div class="metric"><span>Coverage Area</span><span id="coverage" class="metric-value">0 m²</span></div>
-                    <div class="metric"><span>Track Acc</span><span id="trackAcc" class="metric-value">95%</span></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="panels">
-            <div class="panel">
-                <div class="panel-title">🎯 THREAT MATRIX & FINGERPRINT</div>
-                <div style="background: #1a1e37; border: 2px solid #ffff00; padding: 8px; margin: 4px 0;">
-                    <div style="color: #ffff00; font-weight: bold; font-size: 9px;" id="swarmId">SWARM-2026-001-DIAMOND</div>
-                    <div style="color: #00ff00; font-size: 8px;" id="rfSig">RF: 2.4G + 5.8G + 10.5G</div>
-                </div>
-                <div class="metric"><span>Formation</span><span class="metric-value" id="formation">DIAMOND</span></div>
-                <div class="metric"><span>Threat Level</span><span class="metric-value threat-high" id="threatLevel">CRITICAL</span></div>
-                <div class="metric"><span>Detected</span><span class="metric-value" id="detected">0</span></div>
-                <div class="metric"><span>Threats</span><span class="metric-value threat-high" id="threats">0</span></div>
-                <div class="metric"><span>Mitigated (Sim)</span><span class="metric-value threat-low" id="mitigated">0</span></div>
-                <div class="metric"><span>Standard</span><span class="metric-value" id="standardCount">0</span></div>
-                <div class="metric"><span>Hardened</span><span class="metric-value" id="hardenedCount">0</span></div>
-                <div class="metric"><span>Military</span><span class="metric-value" id="militaryCount">0</span></div>
-            </div>
-            
-            <div class="panel">
-                <div class="panel-title">📍 SPAWN CONTROLS</div>
-                <button onclick="addDrone('Hostile')" style="width:48%; margin-right:2%;">+ Hostile</button>
-                <button onclick="addDrone('Ally')" style="width:48%;">+ Ally</button>
-                <button onclick="spawnSwarm()" style="width:48%; margin-right:2%;">🐝 SWARM x5</button>
-                <button onclick="spawnHardenedSwarm()" style="width:48%; margin-top:4px; background:#8800ff; border-color:#8800ff;">🔷 HARDENED x5</button>
-                <button onclick="resetSimulation()" style="width:100%; margin-top:4px;">RESET</button>
-            </div>
-
-            <div class="panel">
-                <div class="panel-title">🌍 ENVIRONMENT</div>
-                <div style="margin-bottom:6px;">
-                    <label style="font-size:9px;">Weather:</label>
-                    <select id="weather" onchange="updateEnvironment()">
-                        <option value="clear">Clear (0%)</option>
-                        <option value="rain">Rain (-22%)</option>
-                        <option value="storm">Storm (-28%)</option>
-                    </select>
-                </div>
-                <div>
-                    <label style="font-size:9px;">Terrain:</label>
-                    <select id="terrain" onchange="updateEnvironment()">
-                        <option value="open">Open Terrain (0%)</option>
-                        <option value="urban">Urban (-8%)</option>
-                        <option value="mountain">Mountain (-10%)</option>
-                    </select>
-                </div>
-                <div class="metric" style="margin-top:8px;"><span>Combined Impact</span><span id="envImpact" class="metric-value">0%</span></div>
-            </div>
-            
-            <div class="panel">
-                <div class="panel-title">🔷 FORMATION</div>
-                <button onclick="setFormation('SCATTER')" style="width:23%; margin-right:1%;">SCATTER</button>
-                <button onclick="setFormation('LINE')" style="width:23%; margin-right:1%;">LINE</button>
-                <button onclick="setFormation('WEDGE')" style="width:23%; margin-right:1%;">WEDGE</button>
-                <button onclick="setFormation('DIAMOND')" style="width:23%;">DIAMOND</button>
-            </div>
-
-            <div class="panel module-panel">
-                <div class="panel-title">🔊 BIO-MIMETIC ACOUSTIC DECOY</div>
-                <button id="acousticBtn" onclick="activateAcousticDecoy()" style="width:100%; background:#ff6600; border-color:#ff6600;">🔊 DEPLOY ACOUSTIC DECOY</button>
-                <div id="acousticStatus" style="color:#ff6600; font-size:8px; margin-top:6px;"></div>
-                <div class="metric" style="margin-top:6px;"><span>Emitted Sigs</span><span id="acousticSigs" class="metric-value">0</span></div>
-                <div class="metric"><span>Panic Level</span><span id="panicLevel" class="metric-value">0%</span></div>
-                <div class="metric"><span>Abort Prob</span><span id="abortProb" class="metric-value">0%</span></div>
-            </div>
-
-            <div class="panel module-panel">
-                <div class="panel-title">🚁 DRONE-MOUNTED KINETIC INTERCEPTOR</div>
-                <button id="kineticBtn" onclick="deployKineticInterceptor()" style="width:100%; background:#00ccff; border-color:#00ccff; color:#000;">🚁 LAUNCH INTERCEPTOR</button>
-                <div id="kineticStatus" style="color:#00ccff; font-size:8px; margin-top:6px;"></div>
-                <div class="metric" style="margin-top:6px;"><span>Interceptors</span><span id="interceptorCount" class="metric-value">0</span></div>
-                <div class="metric"><span>Captured</span><span id="capturedCount" class="metric-value">0</span></div>
-                <div class="metric"><span>Success Rate</span><span id="captureRate" class="metric-value">0%</span></div>
-            </div>
-
-            <div class="panel module-panel">
-                <div class="panel-title">📡 FREQUENCY-AGILE JAMMING</div>
-                <button id="adaptiveBtn" onclick="activateAdaptiveJamming()" style="width:100%; background:#00aa88; border-color:#00aa88;">📡 ADAPTIVE RF LOCK (SIM)</button>
-                <div id="adaptiveStatus" style="color:#00aa88; font-size:8px; margin-top:6px;"></div>
-                <div class="metric" style="margin-top:6px;"><span>Lock Status</span><span id="lockStatus" class="metric-value">IDLE</span></div>
-                <div class="metric"><span>Primary Band</span><span id="primaryBand" class="metric-value">SCAN</span></div>
-                <div class="metric"><span>Jam Efficacy</span><span id="jamEfficacy" class="metric-value">0%</span></div>
-                <div class="metric"><span>Hops Tracked</span><span id="hopsTracked" class="metric-value">0</span></div>
-            </div>
-
-            <div class="panel">
-                <div class="panel-title">🎮 MITIGATION ACTIONS</div>
-                <button onclick="globalMitigation()">WIDE-AREA MIT (SIM)</button>
-                <button onclick="selectiveMitigation()">TARGETED MIT (SIM)</button>
-                <button onclick="toggleDynamicMode()" id="dynamicBtn">DYNAMIC MODE (SIM)</button>
-                <button onclick="generateAAR()" style="background:#ff6600; border-color:#ff6600;">📋 EXPORT AAR</button>
-            </div>
-            
-            <div class="panel">
-                <div class="panel-title">🤖 PREDICT AI</div>
-                <div class="metric"><span>Approaching</span><span class="metric-value" id="approaching">0</span></div>
-                <div class="metric"><span>Avg Speed</span><span class="metric-value" id="avgSpeed">0</span></div>
-                <div class="metric"><span>ETA (s)</span><span class="metric-value" id="eta">N/A</span></div>
-            </div>
-            
-        </div>
-    </div>
-
-    <script>
-        const state = {
-            drones: [],
-            formation: 'DIAMOND',
-            weather: 'clear',
-            terrain: 'open',
-            jamActive: false,
-            selectiveActive: false,
-            acousticActive: false,
-            kineticActive: false,
-            missionStart: Date.now(),
-            droneCounter: 0,
-            dynamicMode: false,
-            score: 0,
-            protectedAssets: {},
-            interceptorCount: 0,
-            capturedCount: 0,
-            acousticSignatures: 0,
-            panicLevel: 0,
-            emulationActive: false,
-            freqSpectrum: { '2.4G': 0, '5.8G': 0, '10.5G': 0 },
-            adaptiveActive: false,
-            trackedHops: [],
-            currentJamBand: null,
-            hopsTracked: 0,
-            jamEfficacy: 0
-        };
-
-        const weatherMods = { clear: 0, rain: -22, storm: -28 };
-        const terrainMods = { open: 0, urban: -8, mountain: -10 };
-
-        let canvas, ctx, radarContainer;
-
-        function initCanvas() {
-            radarContainer = document.getElementById('radarContainer');
-            canvas = document.getElementById('radarCanvas');
-            canvas.width = radarContainer.clientWidth;
-            canvas.height = radarContainer.clientHeight;
-            ctx = canvas.getContext('2d');
-        }
-
-        class Drone {
-            constructor(type) {
-                this.id = `DRONE-${++state.droneCounter}`;
-                this.type = type;
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.vx = (Math.random() - 0.5) * 2;
-                this.vy = (Math.random() - 0.5) * 2;
-                this.threat = type === 'Hostile' ? Math.random() * 100 : 0;
-                this.jammed = false;
-                
-                // RF FREQUENCY HOPPING
-                this.frequencyBands = ['2.4G', '5.8G', '10.5G'];
-                this.currentFreqIndex = Math.floor(Math.random() * 3);
-                this.hopTimer = 0;
-                this.hopInterval = Math.random() * 1000 + 1000; // 1-2 seconds
-                
-                // HARDENED DRONE VARIANTS
-                const rand = Math.random();
-                if (type === 'Hostile') {
-                    if (rand > 0.85) {
-                        this.droneClass = 'MILITARY';
-                        this.jamResistance = 0.9;
-                        this.hopInterval *= 1.3; // Military hops slower
-                    } else if (rand > 0.65) {
-                        this.droneClass = 'HARDENED';
-                        this.jamResistance = 0.6;
-                        this.hopInterval *= 1.15; // Hardened hops slightly slower
-                    } else {
-                        this.droneClass = 'STANDARD';
-                        this.jamResistance = 0;
-                    }
-                } else {
-                    this.droneClass = 'ALLY';
-                    this.jamResistance = 0;
-                }
-                
-                this.redirected = false;
-                this.captured = false;
-                this.panicMode = false;
-                this.targetX = null;
-                this.targetY = null;
-            }
-
-            update() {
-                if (this.jammed || this.captured) return;
-                
-                // UPDATE RF FREQUENCY HOPPING
-                this.hopTimer += 16; // ~60fps
-                if (this.hopTimer >= this.hopInterval) {
-                    this.currentFreqIndex = (this.currentFreqIndex + 1) % 3;
-                    this.hopTimer = 0;
-                    this.hopInterval = Math.random() * 1000 + 1000;
-                }
-                
-                if (this.panicMode) {
-                    this.vx += (Math.random() - 0.5) * 0.5;
-                    this.vy += (Math.random() - 0.5) * 0.5;
-                    this.vx = Math.max(-3, Math.min(3, this.vx));
-                    this.vy = Math.max(-3, Math.min(3, this.vy));
-                }
-                
-                if (this.redirected && this.targetX !== null) {
-                    const dx = this.targetX - this.x;
-                    const dy = this.targetY - this.y;
-                    const dist = Math.sqrt(dx*dx + dy*dy);
-                    if (dist > 3) {
-                        this.x += (dx / dist) * 2;
-                        this.y += (dy / dist) * 2;
-                    }
-                } else {
-                    this.x += this.vx;
-                    this.y += this.vy;
-                    if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
-                    if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
-                }
-            }
-
-            getCurrentFreq() {
-                return this.frequencyBands[this.currentFreqIndex];
-            }
-
-            draw() {
-                let color = this.jammed ? '#ffff00' : (this.type === 'Hostile' ? '#ff0000' : '#00ff00');
-                if (this.captured) color = '#0088ff';
-                if (this.panicMode) color = '#ffaa00';
-                
-                // HARDENED DRONE VISUAL VARIANTS
-                if (this.type === 'Hostile') {
-                    if (this.droneClass === 'STANDARD') {
-                        ctx.fillStyle = color;
-                        ctx.beginPath();
-                        ctx.arc(this.x, this.y, 5, 0, Math.PI * 2);
-                        ctx.fill();
-                    } else if (this.droneClass === 'HARDENED') {
-                        ctx.fillStyle = color;
-                        ctx.beginPath();
-                        ctx.moveTo(this.x, this.y - 6);
-                        ctx.lineTo(this.x + 6, this.y);
-                        ctx.lineTo(this.x, this.y + 6);
-                        ctx.lineTo(this.x - 6, this.y);
-                        ctx.closePath();
-                        ctx.fill();
-                        
-                        ctx.strokeStyle = '#ff00ff';
-                        ctx.lineWidth = 2;
-                        ctx.stroke();
-                    } else if (this.droneClass === 'MILITARY') {
-                        ctx.fillStyle = color;
-                        ctx.beginPath();
-                        const angle = Math.PI / 4;
-                        for (let i = 0; i < 8; i++) {
-                            const x = this.x + 6 * Math.cos(i * angle);
-                            const y = this.y + 6 * Math.sin(i * angle);
-                            if (i === 0) ctx.moveTo(x, y);
-                            else ctx.lineTo(x, y);
-                        }
-                        ctx.closePath();
-                        ctx.fill();
-                        
-                        ctx.strokeStyle = '#00ffff';
-                        ctx.lineWidth = 2.5;
-                        ctx.stroke();
-                        
-                        ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
-                        ctx.lineWidth = 4;
-                        ctx.stroke();
-                    }
-                } else {
-                    ctx.fillStyle = color;
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, 5, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
-        }
-
-        class Interceptor {
-            constructor(targetDrone) {
-                this.x = canvas.width / 2;
-                this.y = canvas.height / 2;
-                this.targetDrone = targetDrone;
-                this.speed = 3;
-                this.captureRadius = 15;
-            }
-
-            update() {
-                if (this.targetDrone.captured) return;
-                
-                const dx = this.targetDrone.x - this.x;
-                const dy = this.targetDrone.y - this.y;
-                const dist = Math.sqrt(dx*dx + dy*dy);
-                
-                if (dist < this.captureRadius) {
-                    this.targetDrone.captured = true;
-                    this.targetDrone.type = 'Intercepted';
-                    state.capturedCount++;
-                    return;
-                }
-                
-                this.x += (dx / dist) * this.speed;
-                this.y += (dy / dist) * this.speed;
-            }
-
-            draw() {
-                ctx.fillStyle = '#ff8800';
-                ctx.beginPath();
-                ctx.rect(this.x - 4, this.y - 4, 8, 8);
-                ctx.fill();
-                
-                ctx.strokeStyle = '#ffaa00';
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.captureRadius, 0, Math.PI * 2);
-                ctx.stroke();
-            }
-        }
-
-        let interceptors = [];
-        let metricsCache = { lastUpdate: 0 };
-        let triangulationCache = { lastUpdate: 0, signal: '-82', accuracy: '8', lat: '38.8951', lon: '-77.0369' };
-        let aiCache = { lastUpdate: 0, approaching: 0, avgSpeed: 0, eta: 'N/A' };
-
-        function animate() {
-            ctx.fillStyle = '#0a0e27';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.strokeStyle = '#003300';
-            ctx.lineWidth = 1;
-            for (let i = 0; i < canvas.width; i += 50) {
-                ctx.beginPath();
-                ctx.moveTo(i, 0);
-                ctx.lineTo(i, canvas.height);
-                ctx.stroke();
-            }
-            for (let i = 0; i < canvas.height; i += 50) {
-                ctx.beginPath();
-                ctx.moveTo(0, i);
-                ctx.lineTo(canvas.width, i);
-                ctx.stroke();
-            }
-
-            state.drones.forEach(drone => {
-                drone.update();
-                drone.draw();
-            });
-
-            interceptors.forEach((interceptor, index) => {
-                interceptor.update();
-                interceptor.draw();
-                if (interceptor.targetDrone.captured) {
-                    interceptors.splice(index, 1);
-                }
-            });
-
-            ctx.strokeStyle = '#00ff00';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(canvas.width / 2 - 20, canvas.height / 2);
-            ctx.lineTo(canvas.width / 2 + 20, canvas.height / 2);
-            ctx.moveTo(canvas.width / 2, canvas.height / 2 - 20);
-            ctx.lineTo(canvas.width / 2, canvas.height / 2 + 20);
-            ctx.stroke();
-
-            updateUI();
-            updateSwarmCohesion();
-            updateRFSpectrum();
-            requestAnimationFrame(animate);
-        }
-
-        function updateRFSpectrum() {
-            // Calculate frequency usage across all hostile drones
-            state.freqSpectrum = { '2.4G': 0, '5.8G': 0, '10.5G': 0 };
-            const hostiles = state.drones.filter(d => d.type === 'Hostile');
-            
-            hostiles.forEach(d => {
-                const freq = d.getCurrentFreq();
-                state.freqSpectrum[freq]++;
-            });
-
-            const total = hostiles.length || 1;
-            const freq24pct = Math.round((state.freqSpectrum['2.4G'] / total) * 100);
-            const freq58pct = Math.round((state.freqSpectrum['5.8G'] / total) * 100);
-            const freq105pct = Math.round((state.freqSpectrum['10.5G'] / total) * 100);
-
-            document.getElementById('freq24').style.width = freq24pct + '%';
-            document.getElementById('freq24val').textContent = state.freqSpectrum['2.4G'];
-            
-            document.getElementById('freq58').style.width = freq58pct + '%';
-            document.getElementById('freq58val').textContent = state.freqSpectrum['5.8G'];
-            
-            document.getElementById('freq105').style.width = freq105pct + '%';
-            document.getElementById('freq105val').textContent = state.freqSpectrum['10.5G'];
-
-            // Detect hop rate
-            const avgHopInterval = hostiles.length > 0 
-                ? hostiles.reduce((sum, d) => sum + d.hopInterval, 0) / hostiles.length 
-                : 0;
-            
-            let hopRateLabel = 'SLOW';
-            if (avgHopInterval < 1200) hopRateLabel = 'FAST';
-            if (avgHopInterval < 1050) hopRateLabel = 'EXTREME';
-            if (avgHopInterval > 1500) hopRateLabel = 'SLOW';
-            
-            document.getElementById('hopRate').textContent = hopRateLabel;
-        }
-
-        function activateAcousticDecoy() {
-            if (state.acousticActive) return;
-            
-            state.acousticActive = true;
-            state.acousticSignatures = Math.floor(Math.random() * 30) + 20;
-            
-            const hostiles = state.drones.filter(d => d.type === 'Hostile');
-            hostiles.forEach(d => { d.panicMode = true; });
-
-            document.getElementById('acousticBtn').textContent = '🔊 DECOY ACTIVE';
-            document.getElementById('acousticBtn').classList.add('module-active');
-            document.getElementById('acousticStatus').textContent = `${state.acousticSignatures} signatures emitted (sim)`;
-
-            setTimeout(() => {
-                hostiles.forEach(d => {
-                    if (Math.random() > 0.3) d.panicMode = false;
-                });
-                state.acousticActive = false;
-                document.getElementById('acousticBtn').textContent = '🔊 DEPLOY ACOUSTIC DECOY';
-                document.getElementById('acousticBtn').classList.remove('module-active');
-                document.getElementById('acousticStatus').textContent = '';
-            }, 3000);
-
-            updateAcousticMetrics();
-        }
-
-        function updateAcousticMetrics() {
-            if (!state.acousticActive) {
-                document.getElementById('acousticSigs').textContent = '0';
-                document.getElementById('panicLevel').textContent = '0%';
-                document.getElementById('abortProb').textContent = '0%';
-                return;
-            }
-
-            const hostiles = state.drones.filter(d => d.type === 'Hostile' && d.panicMode).length;
-            const totalHostiles = state.drones.filter(d => d.type === 'Hostile').length;
-            state.panicLevel = totalHostiles > 0 ? Math.floor((hostiles / totalHostiles) * 100) : 0;
-            const abortProbability = Math.min(89, state.panicLevel + Math.floor(Math.random() * 20));
-
-            document.getElementById('acousticSigs').textContent = state.acousticSignatures;
-            document.getElementById('panicLevel').textContent = state.panicLevel + '%';
-            document.getElementById('abortProb').textContent = abortProbability + '%';
-        }
-
-        function deployKineticInterceptor() {
-            const hostiles = state.drones.filter(d => d.type === 'Hostile' && !d.captured);
-            if (hostiles.length === 0) return;
-
-            const targetCount = Math.min(3, hostiles.length);
-            for (let i = 0; i < targetCount; i++) {
-                interceptors.push(new Interceptor(hostiles[i]));
-                state.interceptorCount++;
-            }
-
-            document.getElementById('kineticBtn').textContent = `🚁 ${state.interceptorCount} DEPLOYED`;
-            document.getElementById('kineticBtn').classList.add('module-active');
-            document.getElementById('kineticStatus').textContent = `${targetCount} interceptors deployed (sim)`;
-            updateKineticMetrics();
-        }
-
-        function updateKineticMetrics() {
-            const captureRate = state.interceptorCount > 0 
-                ? Math.floor((state.capturedCount / state.interceptorCount) * 100) 
-                : 0;
-            
-            document.getElementById('interceptorCount').textContent = state.interceptorCount;
-            document.getElementById('capturedCount').textContent = state.capturedCount;
-            document.getElementById('captureRate').textContent = captureRate + '%';
-
-            if (state.interceptorCount === 0) {
-                document.getElementById('kineticBtn').textContent = '🚁 LAUNCH INTERCEPTOR';
-                document.getElementById('kineticBtn').classList.remove('module-active');
-            }
-        }
-
-        function updateUI() {
-            const hostile = state.drones.filter(d => d.type === 'Hostile').length;
-            const jammedCount = state.drones.filter(d => d.jammed).length;
-            const capturedCount = state.drones.filter(d => d.captured).length;
-            
-            // COUNT DRONE CLASSES
-            const standardCount = state.drones.filter(d => d.type === 'Hostile' && d.droneClass === 'STANDARD').length;
-            const hardenedCount = state.drones.filter(d => d.type === 'Hostile' && d.droneClass === 'HARDENED').length;
-            const militaryCount = state.drones.filter(d => d.type === 'Hostile' && d.droneClass === 'MILITARY').length;
-
-            document.getElementById('detected').textContent = state.drones.length;
-            document.getElementById('threats').textContent = hostile;
-            document.getElementById('mitigated').textContent = (jammedCount + capturedCount);
-            document.getElementById('standardCount').textContent = standardCount;
-            document.getElementById('hardenedCount').textContent = hardenedCount;
-            document.getElementById('militaryCount').textContent = militaryCount;
-            document.getElementById('swarmId').textContent = `SWARM-2026-${String(state.droneCounter).padStart(3, '0')}-${state.formation}`;
-            document.getElementById('formation').textContent = state.formation;
-
-            updateAcousticMetrics();
-            updateKineticMetrics();
-            updatePerformanceMetrics();
-            updateTriangulation();
-            updateAIPrediction();
-            updateAdaptiveMetrics();
-        }
-
-        function updateSwarmCohesion() {
-            const hostiles = state.drones.filter(d => d.type === 'Hostile');
-            if (hostiles.length < 2) {
-                document.getElementById('cohesionVal').textContent = 'Cohesion: N/A';
-                document.getElementById('cohesionFill').style.width = '0%';
-                return;
-            }
-
-            let totalDist = 0;
-            for (let i = 0; i < hostiles.length; i++) {
-                for (let j = i + 1; j < hostiles.length; j++) {
-                    const dx = hostiles[i].x - hostiles[j].x;
-                    const dy = hostiles[i].y - hostiles[j].y;
-                    totalDist += Math.sqrt(dx*dx + dy*dy);
-                }
-            }
-
-            const avgDist = totalDist / (hostiles.length * (hostiles.length - 1) / 2);
-            let cohesion = Math.max(0, 1 - avgDist / 400);
-            
-            if (state.jamActive || state.selectiveActive) cohesion *= 0.3;
-            if (state.acousticActive) cohesion *= 0.2;
-            
-            const cohesionPercent = Math.round(cohesion * 100);
-            document.getElementById('cohesionFill').style.width = cohesionPercent + '%';
-            const cohesion_txt = cohesion > 0.6 ? 'TIGHT' : cohesion > 0.3 ? 'FORMING' : 'FRAGMENTED';
-            document.getElementById('cohesionVal').textContent = `Cohesion: ${cohesionPercent}% (${cohesion_txt})`;
-        }
-
-        function updatePerformanceMetrics() {
-            const now = Date.now();
-            if (now - metricsCache.lastUpdate < 3000) return;
-            
-            const hostile = state.drones.filter(d => d.type === 'Hostile').length;
-            const mitigated = state.drones.filter(d => d.jammed || d.captured).length;
-            const coverage = canvas.width * canvas.height;
-            
-            document.getElementById('detectionSpeed').textContent = (500 + Math.random() * 1500).toFixed(0) + ' ms';
-            document.getElementById('detectionAccuracy').textContent = (hostile > 0 ? 95 + Math.floor(Math.random() * 4) : 100) + '%';
-            document.getElementById('mitigationSuccess').textContent = (hostile > 0 ? Math.floor((mitigated / hostile) * 100) : 0) + '%';
-            document.getElementById('reliability').textContent = (hostile > 0 ? 95 + Math.floor(Math.random() * 4) : 100) + '%';
-            document.getElementById('score').textContent = state.score;
-            document.getElementById('targetingAcc').textContent = (hostile > 0 ? Math.floor((mitigated / hostile) * 100) : 0) + '%';
-            document.getElementById('coverage').textContent = coverage.toLocaleString();
-            
-            metricsCache.lastUpdate = now;
-        }
-
-        function updateTriangulation() {
-            const now = Date.now();
-            if (now - triangulationCache.lastUpdate < 3000) return;
-            
-            triangulationCache.signal = (-90 + Math.random() * 15).toFixed(0);
-            triangulationCache.accuracy = Math.floor(Math.random() * 10 + 5);
-            const latVar = Math.random() * 0.001;
-            const lonVar = Math.random() * 0.001;
-            triangulationCache.lat = (38.8951 + latVar).toFixed(4);
-            triangulationCache.lon = (-77.0369 - lonVar).toFixed(4);
-            triangulationCache.lastUpdate = now;
-
-            document.getElementById('signal').textContent = triangulationCache.signal + ' dBm';
-            document.getElementById('triAccuracy').textContent = '±' + triangulationCache.accuracy + 'm';
-            document.getElementById('latitude').textContent = triangulationCache.lat + '°N';
-            document.getElementById('longitude').textContent = triangulationCache.lon + '°W';
-        }
-
-        function updateAIPrediction() {
-            const now = Date.now();
-            if (now - aiCache.lastUpdate < 3000) return;
-
-            const hostiles = state.drones.filter(d => d.type === 'Hostile' && !d.jammed);
-            aiCache.approaching = hostiles.length;
-            
-            if (hostiles.length === 0) {
-                aiCache.avgSpeed = 0;
-                aiCache.eta = 'N/A';
-            } else {
-                let totalSpeed = 0;
-                hostiles.forEach(d => {
-                    totalSpeed += Math.sqrt(d.vx * d.vx + d.vy * d.vy);
-                });
-                aiCache.avgSpeed = (totalSpeed / hostiles.length).toFixed(2);
-                aiCache.eta = (Math.random() * 30 + 10).toFixed(1);
-            }
-            aiCache.lastUpdate = now;
-
-            document.getElementById('approaching').textContent = aiCache.approaching;
-            document.getElementById('avgSpeed').textContent = aiCache.avgSpeed;
-            document.getElementById('eta').textContent = aiCache.eta;
-        }
-
-        function addDrone(type) {
-            const drone = new Drone(type);
-            state.drones.push(drone);
-        }
-
-        function spawnSwarm() {
-            for (let i = 0; i < 5; i++) {
-                state.drones.push(new Drone('Hostile'));
-            }
-        }
-
-        function spawnHardenedSwarm() {
-            for (let i = 0; i < 5; i++) {
-                const drone = new Drone('Hostile');
-                drone.droneClass = Math.random() > 0.4 ? 'MILITARY' : 'HARDENED';
-                drone.jamResistance = drone.droneClass === 'MILITARY' ? 0.9 : 0.6;
-                state.drones.push(drone);
-            }
-        }
-
-        function setFormation(form) {
-            state.formation = form;
-            state.drones.forEach(d => {
-                d.vx = (Math.random() - 0.5) * 2;
-                d.vy = (Math.random() - 0.5) * 2;
-            });
-        }
-
-        function resetSimulation() {
-            state.drones = [];
-            state.jamActive = false;
-            state.selectiveActive = false;
-            state.acousticActive = false;
-            state.kineticActive = false;
-            state.droneCounter = 0;
-            state.score = 0;
-            state.interceptorCount = 0;
-            state.capturedCount = 0;
-            state.emulationActive = false;
-            state.adaptiveActive = false;
-            state.trackedHops = [];
-            state.hopsTracked = 0;
-            state.jamEfficacy = 0;
-            state.currentJamBand = null;
-            interceptors = [];
-            document.getElementById('emulationBtn').textContent = '🟣 PROTOCOL EMULATION (SIM)';
-            document.getElementById('emulationBtn').style.background = '#ff00ff';
-            document.getElementById('acousticBtn').textContent = '🔊 DEPLOY ACOUSTIC DECOY';
-            document.getElementById('kineticBtn').textContent = '🚁 LAUNCH INTERCEPTOR';
-            document.getElementById('adaptiveBtn').textContent = '📡 ADAPTIVE RF LOCK (SIM)';
-            document.getElementById('adaptiveBtn').style.background = '#00aa88';
-            document.getElementById('adaptiveStatus').textContent = '';
-        }
-
-        function globalMitigation() {
-            state.jamActive = true;
-            state.drones.forEach(d => {
-                if (d.type === 'Hostile' && !d.captured) {
-                    if (Math.random() > d.jamResistance) {
-                        d.jammed = true;
-                    }
-                }
-            });
-        }
-
-        function selectiveMitigation() {
-            state.selectiveActive = true;
-            const hostile = state.drones.filter(d => d.type === 'Hostile' && !d.jammed && !d.captured);
-            hostile.slice(0, 2).forEach(d => {
-                if (Math.random() > d.jamResistance) {
-                    d.jammed = true;
-                }
-            });
-        }
-
-        function activateProtocolEmulation() {
-            state.emulationActive = !state.emulationActive;
-            const hostiles = state.drones.filter(d => d.type === 'Hostile');
-            
-            if (state.emulationActive) {
-                hostiles.forEach(d => {
-                    d.targetX = canvas.width / 2 + (Math.random() - 0.5) * 100;
-                    d.targetY = canvas.height / 2 + (Math.random() - 0.5) * 100;
-                    d.redirected = true;
-                });
-                document.getElementById('emulationBtn').textContent = '🟢 EMULATION ACTIVE (SIM)';
-                document.getElementById('emulationBtn').style.background = '#00ff00';
-            } else {
-                hostiles.forEach(d => {
-                    d.redirected = false;
-                    d.targetX = null;
-                    d.targetY = null;
-                });
-                document.getElementById('emulationBtn').textContent = '🟣 PROTOCOL EMULATION (SIM)';
-                document.getElementById('emulationBtn').style.background = '#ff00ff';
-            }
-        }
-
-        function toggleAsset(asset) {
-            state.protectedAssets[asset] = !state.protectedAssets[asset];
-            const btn = document.getElementById(asset + 'Btn');
-            if (state.protectedAssets[asset]) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-        }
-
-        function toggleDynamicMode() {
-            state.dynamicMode = !state.dynamicMode;
-            const btn = document.getElementById('dynamicBtn');
-            if (state.dynamicMode) {
-                btn.textContent = 'DYNAMIC MODE ON';
-                btn.classList.add('active');
-            } else {
-                btn.textContent = 'DYNAMIC MODE (SIM)';
-                btn.classList.remove('active');
-            }
-        }
-
-        function generateAAR() {
-            alert('AAR exported: Mission summary with RF hopping + acoustic decoy + kinetic interceptor stats');
-        }
-
-        function updateEnvironment() {
-            state.weather = document.getElementById('weather').value;
-            state.terrain = document.getElementById('terrain').value;
-            
-            const weatherMod = weatherMods[state.weather] || 0;
-            const terrainMod = terrainMods[state.terrain] || 0;
-            const combined = weatherMod + terrainMod;
-            
-            document.getElementById('envImpact').textContent = combined + '%';
-        }
-
-        function activateAdaptiveJamming() {
-            if (state.adaptiveActive) {
-                // DEACTIVATE
-                state.adaptiveActive = false;
-                document.getElementById('adaptiveBtn').textContent = '📡 ADAPTIVE RF LOCK (SIM)';
-                document.getElementById('adaptiveBtn').style.background = '#00aa88';
-                document.getElementById('adaptiveStatus').textContent = 'Adaptive lock disengaged';
-                document.getElementById('lockStatus').textContent = 'IDLE';
-                return;
-            }
-
-            // ACTIVATE ADAPTIVE JAMMING
-            state.adaptiveActive = true;
-            state.trackedHops = [];
-            state.hopsTracked = 0;
-            state.jamEfficacy = 0;
-            state.lastAdaptiveUpdate = Date.now();
-            
-            document.getElementById('adaptiveBtn').textContent = '📡 LOCK ACTIVE - TRACKING';
-            document.getElementById('adaptiveBtn').style.background = '#00ff00';
-            document.getElementById('adaptiveStatus').textContent = 'Real-time frequency tracking enabled';
-            document.getElementById('lockStatus').textContent = 'TRACKING';
-
-            // SCAN PHASE: Build frequency profile from current drone activity
-            const hostiles = state.drones.filter(d => d.type === 'Hostile');
-            const freqCounts = { '2.4G': 0, '5.8G': 0, '10.5G': 0 };
-            
-            hostiles.forEach(d => {
-                freqCounts[d.getCurrentFreq()]++;
-            });
-
-            // LOCK onto dominant frequency
-            let dominantFreq = '2.4G';
-            let maxCount = 0;
-            for (let freq in freqCounts) {
-                if (freqCounts[freq] > maxCount) {
-                    maxCount = freqCounts[freq];
-                    dominantFreq = freq;
-                }
-            }
-
-            state.currentJamBand = dominantFreq;
-            state.previousJamBand = null;
-            document.getElementById('primaryBand').textContent = dominantFreq;
-        }
-
-        function updateAdaptiveMetrics() {
-            if (!state.adaptiveActive) {
-                document.getElementById('lockStatus').textContent = 'IDLE';
-                document.getElementById('primaryBand').textContent = 'SCAN';
-                document.getElementById('jamEfficacy').textContent = '0%';
-                document.getElementById('hopsTracked').textContent = '0';
-                return;
-            }
-
-            // RATE LIMIT: Only update adaptive jamming every 500ms to prevent thrashing
-            const now = Date.now();
-            if (now - state.lastAdaptiveUpdate < 500) return;
-            state.lastAdaptiveUpdate = now;
-
-            const hostiles = state.drones.filter(d => d.type === 'Hostile' && !d.captured && !d.jammed);
-            if (hostiles.length === 0) {
-                document.getElementById('jamEfficacy').textContent = '100%';
-                document.getElementById('lockStatus').textContent = 'LOCKED';
-                return;
-            }
-            
-            // ANALYZE CURRENT FREQUENCY DISTRIBUTION
-            const freqCounts = { '2.4G': 0, '5.8G': 0, '10.5G': 0 };
-            hostiles.forEach(d => {
-                freqCounts[d.getCurrentFreq()]++;
-            });
-
-            // DETECT BAND SWITCH (hop tracking)
-            if (state.currentJamBand !== state.previousJamBand && state.previousJamBand !== null) {
-                state.hopsTracked++;
-                if (state.hopsTracked > 99) state.hopsTracked = 0;
-            }
-            state.previousJamBand = state.currentJamBand;
-
-            // ADAPTIVE LOCK: Target current dominant band
-            let bestFreq = state.currentJamBand;
-            let bestCount = freqCounts[bestFreq];
-            
-            // Switch to new dominant band if it has more drones (20% of time predict next)
-            for (let freq in freqCounts) {
-                if (freqCounts[freq] > bestCount) {
-                    if (Math.random() < 0.2) { // 20% prediction success
-                        bestFreq = freq;
-                        bestCount = freqCounts[freq];
-                    }
-                }
-            }
-            
-            state.currentJamBand = bestFreq;
-            document.getElementById('primaryBand').textContent = bestFreq;
-
-            // APPLY JAMMING to drones on current band
-            let jammed = 0;
-            hostiles.forEach(d => {
-                if (d.getCurrentFreq() === state.currentJamBand) {
-                    // Adaptive jamming is 30% more effective (lower resistance threshold)
-                    if (Math.random() > d.jamResistance * 0.7) {
-                        d.jammed = true;
-                        jammed++;
-                    }
-                }
-            });
-
-            state.jamEfficacy = hostiles.length > 0 ? Math.round((jammed / hostiles.length) * 100) : 0;
-            document.getElementById('jamEfficacy').textContent = state.jamEfficacy + '%';
-
-            // UPDATE STATUS based on efficacy
-            if (state.jamEfficacy > 60) {
-                document.getElementById('lockStatus').textContent = 'LOCKED';
-                document.getElementById('adaptiveStatus').textContent = `Locked to ${state.currentJamBand} - ${state.jamEfficacy}% jammed`;
-            } else if (state.jamEfficacy > 30) {
-                document.getElementById('lockStatus').textContent = 'TRACKING';
-                document.getElementById('adaptiveStatus').textContent = `Tracking ${state.currentJamBand} - ${state.jamEfficacy}% jammed`;
-            } else {
-                document.getElementById('lockStatus').textContent = 'SCANNING';
-                document.getElementById('adaptiveStatus').textContent = 'Scanning swarm patterns...';
-            }
-
-            document.getElementById('hopsTracked').textContent = state.hopsTracked;
-        }
-
-        window.addEventListener('load', () => {
-            initCanvas();
-            animate();
-        });
-
-        window.addEventListener('resize', () => {
-            initCanvas();
-        });
-    </script>
+  </div>
+
+  <!-- SLIDE 2..14 -->
+  <!-- Paste your existing Slide 2..14 blocks here unchanged -->
+  <!-- END SLIDES -->
+
+  <div class="nav-bar">
+    <button id="btnPrev" type="button" aria-label="Previous slide">← PREV</button>
+    <button id="btnNext" type="button" aria-label="Next slide">NEXT →</button>
+  </div>
+
+  <div class="slide-number">
+    <span id="current-slide">1</span> / <span id="total-slides">14</span>
+  </div>
+
+  <div class="swipe-hint" id="swipeHint">Swipe to navigate →</div>
+
+  <script>
+    let currentSlide = 0;
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const totalSlides = slides.length;
+
+    const elTotal = document.getElementById('total-slides');
+    const elCurrent = document.getElementById('current-slide');
+    const btnPrev = document.getElementById('btnPrev');
+    const btnNext = document.getElementById('btnNext');
+    const swipeHint = document.getElementById('swipeHint');
+
+    elTotal.textContent = totalSlides;
+
+    let hasInteracted = false;
+
+    function showSlide(n){
+      slides.forEach(s => s.classList.remove('active'));
+      slides[n].classList.add('active');
+      elCurrent.textContent = (n + 1);
+
+      btnPrev.disabled = n === 0;
+      btnNext.disabled = n === totalSlides - 1;
+
+      // Scroll active slide to top
+      slides[n].scrollTop = 0;
+    }
+
+    function nextSlide(){
+      if(currentSlide < totalSlides - 1){
+        currentSlide++;
+        showSlide(currentSlide);
+        hideHintOnce();
+      }
+    }
+
+    function previousSlide(){
+      if(currentSlide > 0){
+        currentSlide--;
+        showSlide(currentSlide);
+        hideHintOnce();
+      }
+    }
+
+    function hideHintOnce(){
+      if(!hasInteracted){
+        swipeHint.style.display = 'none';
+        hasInteracted = true;
+      }
+    }
+
+    btnPrev.addEventListener('click', previousSlide);
+    btnNext.addEventListener('click', nextSlide);
+
+    // Keyboard navigation (desktop)
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') nextSlide();
+      if (e.key === 'ArrowLeft') previousSlide();
+    });
+
+    // Better swipe: ignore when user is scrolling vertically
+    let touchStartX = 0, touchStartY = 0;
+    let touchEndX = 0, touchEndY = 0;
+
+    function onTouchStart(e){
+      const t = e.changedTouches[0];
+      touchStartX = t.screenX;
+      touchStartY = t.screenY;
+    }
+
+    function onTouchEnd(e){
+      const t = e.changedTouches[0];
+      touchEndX = t.screenX;
+      touchEndY = t.screenY;
+      handleSwipe();
+    }
+
+    function handleSwipe(){
+      const dx = touchEndX - touchStartX;
+      const dy = touchEndY - touchStartY;
+
+      const absX = Math.abs(dx);
+      const absY = Math.abs(dy);
+
+      // If mostly vertical movement, treat as scroll, not swipe
+      if (absY > absX) return;
+
+      const swipeThreshold = 50;
+      if (absX < swipeThreshold) return;
+
+      if (dx < 0) nextSlide();     // swipe left
+      else previousSlide();        // swipe right
+      hideHintOnce();
+    }
+
+    // Attach swipe listeners to active slide area
+    slides.forEach(slide => {
+      slide.addEventListener('touchstart', onTouchStart, { passive: true });
+      slide.addEventListener('touchend', onTouchEnd, { passive: true });
+    });
+
+    // Auto-hide swipe hint after 5 seconds
+    setTimeout(() => {
+      if (!hasInteracted) {
+        swipeHint.style.opacity = '0';
+        setTimeout(() => swipeHint.style.display = 'none', 500);
+      }
+    }, 5000);
+
+    showSlide(0);
+  </script>
 </body>
 </html>
